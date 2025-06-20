@@ -1,23 +1,28 @@
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import Typed from 'typed.js';
 
 const HeroSection = () => {
-  const [displayText, setDisplayText] = useState('');
-  const fullText = "Don't Panic, It's Organic";
+  const typedRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    let currentIndex = 0;
-    const interval = setInterval(() => {
-      if (currentIndex <= fullText.length) {
-        setDisplayText(fullText.slice(0, currentIndex));
-        currentIndex++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 100);
+    if (typedRef.current) {
+      const typed = new Typed(typedRef.current, {
+        strings: ["Don't Panic, It's Organic"],
+        typeSpeed: 100,
+        backSpeed: 50,
+        backDelay: 2000,
+        startDelay: 500,
+        loop: true,
+        showCursor: true,
+        cursorChar: '|',
+      });
 
-    return () => clearInterval(interval);
+      return () => {
+        typed.destroy();
+      };
+    }
   }, []);
 
   const scrollToShop = () => {
@@ -34,8 +39,7 @@ const HeroSection = () => {
           {/* Left Content */}
           <div className="space-y-6">
             <h1 className="text-4xl md:text-6xl font-bold text-foreground">
-              <span className="text-primary">{displayText}</span>
-              <span className="animate-pulse text-primary">|</span>
+              <span ref={typedRef} className="text-primary"></span>
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-lg">
