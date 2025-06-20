@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, ShoppingCart } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import CartPanel from './CartPanel';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,13 +51,7 @@ const Navigation = () => {
 
           {/* Cart Icon & Mobile Menu Button */}
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-primary"
-            >
-              <ShoppingCart size={20} />
-            </Button>
+            <CartPanel />
 
             {/* Mobile Menu Button */}
             <Button
