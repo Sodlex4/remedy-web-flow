@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,9 @@ import {
   Phone,
   Eye,
   CheckCircle,
-  Package
+  Package,
+  VolumeX,
+  Volume2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -38,11 +40,26 @@ const AdminDashboard = () => {
   const [selectedRequest, setSelectedRequest] = useState<PickupRequest | null>(null);
   const [pickupRequests, setPickupRequests] = useState<PickupRequest[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [isMuted, setIsMuted] = useState(false);
+  const [welcomeVisible, setWelcomeVisible] = useState(true);
   const navigate = useNavigate();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Mock data - replace with Supabase data
+  // Initialize audio for notifications
   useEffect(() => {
-    const mockRequests: PickupRequest[] = [
+    // Create audio element for pop sound
+    audioRef.current = new Audio('/sounds/pop.mp3');
+    audioRef.current.volume = 0.6;
+    
+    // Fallback to system notification sound if file doesn't exist
+    audioRef.current.onerror = () => {
+      console.log('Custom sound not found, using system notification');
+    };
+  }, []);
+
+  // Default/Mock data - replace with Supabase data
+  useEffect(() => {
+    const defaultRequests: PickupRequest[] = [
       {
         id: '1',
         customerName: 'John Doe',
@@ -55,9 +72,9 @@ const AdminDashboard = () => {
       },
       {
         id: '2',
-        customerName: 'Jane Smith',
+        customerName: 'Jane M.',
         whatsappNumber: '+254701234567',
-        items: ['Girl Scout Cookies (2g)', 'Lighter'],
+        items: ['Girl Scout Cookies (2g)', 'Grinder (1pc)'],
         pickupTime: 'afternoon',
         status: 'seen',
         createdAt: '2025-01-21T08:15:00Z',
@@ -67,15 +84,58 @@ const AdminDashboard = () => {
         id: '3',
         customerName: 'Mike Johnson',
         whatsappNumber: '+254702345678',
-        items: ['OG Kush (1g)'],
+        items: ['OG Kush (1g)', 'Lighter'],
         pickupTime: 'evening',
         status: 'ready',
         createdAt: '2025-01-20T16:45:00Z',
         totalAmount: 1600
+      },
+      {
+        id: '4',
+        customerName: 'Sarah W.',
+        whatsappNumber: '+254703456789',
+        items: ['Granddaddy Purple (1g)', 'Papers (1 pack)'],
+        pickupTime: 'anytime',
+        status: 'new',
+        createdAt: '2025-01-21T12:20:00Z',
+        totalAmount: 1500
       }
     ];
-    setPickupRequests(mockRequests);
+    setPickupRequests(defaultRequests);
   }, []);
+
+  // Simulate real-time updates (replace with Supabase subscription)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Simulate a new request coming in (for demo purposes)
+      const shouldAddNew = Math.random() < 0.1; // 10% chance every 30 seconds
+      
+      if (shouldAddNew) {
+        const newRequest: PickupRequest = {
+          id: `new-${Date.now()}`,
+          customerName: `Customer ${Math.floor(Math.random() * 100)}`,
+          whatsappNumber: `+2547${Math.floor(Math.random() * 100000000)}`,
+          items: ['New Strain (1g)', 'Papers'],
+          pickupTime: 'anytime',
+          status: 'new',
+          createdAt: new Date().toISOString(),
+          totalAmount: 1800
+        };
+
+        setPickupRequests(prev => [newRequest, ...prev]);
+        
+        // Play notification sound
+        if (!isMuted && audioRef.current) {
+          audioRef.current.play().catch(e => console.log('Audio play failed:', e));
+        }
+        
+        // Show toast notification
+        toast.success(`🛎️ New Pickup Request from ${newRequest.customerName}`);
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [isMuted]);
 
   // Check authentication
   useEffect(() => {
@@ -98,6 +158,11 @@ const AdminDashboard = () => {
       )
     );
     toast.success(`Request marked as ${status}`);
+  };
+
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    toast.info(isMuted ? 'Notifications unmuted' : 'Notifications muted');
   };
 
   const newRequestsCount = pickupRequests.filter(req => req.status === 'new').length;
@@ -190,7 +255,15 @@ const AdminDashboard = () => {
               <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="text-muted-foreground">Welcome, Admin</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleMute}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              </Button>
+              <span className="text-muted-foreground">Welcome, Chizoh</span>
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <User className="text-primary-foreground" size={16} />
               </div>
@@ -200,6 +273,33 @@ const AdminDashboard = () => {
 
         {/* Dashboard Content */}
         <main className="flex-1 p-6">
+          {/* Welcome Banner */}
+          {welcomeVisible && (
+            <div className="mb-8 bg-gradient-to-r from-primary/20 to-green-600/20 rounded-lg p-6 border border-primary/30 animate-fade-in">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-foreground mb-2">
+                    WELCOME CHIZOH 👋
+                  </h1>
+                  <p className="text-lg text-muted-foreground">
+                    {newRequestsCount > 0 
+                      ? `You've got ${newRequestsCount} new pickup requests waiting` 
+                      : "All caught up! Here's your overview for today"
+                    }
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setWelcomeVisible(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X size={20} />
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="bg-card border-border">
