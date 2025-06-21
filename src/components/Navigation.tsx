@@ -1,8 +1,9 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
-import CartPanel from './CartPanel';
+import { Menu, X, Search } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import StrainExplorer from './StrainExplorer';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,9 +50,29 @@ const Navigation = () => {
             ))}
           </div>
 
-          {/* Cart Icon & Mobile Menu Button */}
+          {/* Strain Explorer & Mobile Menu Button */}
           <div className="flex items-center space-x-4">
-            <CartPanel />
+            {/* Strain Explorer Button */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-primary relative"
+                >
+                  <Search size={20} />
+                </Button>
+              </SheetTrigger>
+              
+              <SheetContent side="right" className="w-full p-0 bg-background border-border overflow-hidden">
+                <SheetHeader className="px-6 py-4 border-b border-border">
+                  <SheetTitle className="text-xl font-bold text-foreground">Strain Explorer</SheetTitle>
+                </SheetHeader>
+                <div className="h-full overflow-y-auto">
+                  <StrainExplorer />
+                </div>
+              </SheetContent>
+            </Sheet>
 
             {/* Mobile Menu Button */}
             <Button
