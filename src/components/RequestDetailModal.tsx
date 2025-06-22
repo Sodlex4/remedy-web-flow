@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -27,6 +26,8 @@ interface PickupRequest {
   status: 'new' | 'seen' | 'ready';
   createdAt: string;
   totalAmount: number;
+  isGoogleSynced?: boolean;
+  lastSynced?: string;
 }
 
 interface RequestDetailModalProps {
@@ -35,6 +36,8 @@ interface RequestDetailModalProps {
   onClose: () => void;
   onUpdateStatus: (id: string, status: 'seen' | 'ready') => void;
   userRole: 'admin' | 'assistant' | 'viewer';
+  onSyncToGoogle?: (request: PickupRequest) => void;
+  isGoogleConnected?: boolean;
 }
 
 const RequestDetailModal = ({ 
@@ -42,7 +45,9 @@ const RequestDetailModal = ({
   isOpen, 
   onClose, 
   onUpdateStatus,
-  userRole 
+  userRole,
+  onSyncToGoogle,
+  isGoogleConnected = false
 }: RequestDetailModalProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -77,12 +82,20 @@ const RequestDetailModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between text-foreground dark:text-foreground">
             <span>Pickup Request Details</span>
-            <Badge 
-              className={`${getStatusColor(request.status)} text-white`}
-            >
-              <StatusIcon size={12} className="mr-1" />
-              {request.status.toUpperCase()}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge 
+                className={`${getStatusColor(request.status)} text-white`}
+              >
+                <StatusIcon size={12} className="mr-1" />
+                {request.status.toUpperCase()}
+              </Badge>
+              {request.isGoogleSynced && (
+                <Badge className="bg-blue-500 text-white">
+                  <Calendar size={12} className="mr-1" />
+                  Synced
+                </Badge>
+              )}
+            </div>
           </DialogTitle>
         </DialogHeader>
         
@@ -172,6 +185,38 @@ const RequestDetailModal = ({
               </div>
             </div>
           </div>
+
+          {/* Google Calendar Sync */}
+          {canEdit && isGoogleConnected && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-foreground dark:text-foreground">Google Calendar</h3>
+              
+              <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+                {request.isGoogleSynced ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Calendar className="text-blue-500" size={20} />
+                      <div>
+                        <p className="font-medium text-foreground">Synced to Calendar</p>
+                        <p className="text-sm text-muted-foreground">
+                          Last synced: {request.lastSynced ? format(new Date(request.lastSynced), 'MMM d, h:mm a') : 'Just now'}
+                        </p>
+                      </div>
+                    </div>
+                    <CheckCircle className="text-green-500" size={20} />
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => onSyncToGoogle?.(request)}
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white rounded-xl"
+                  >
+                    <Calendar className="mr-2" size={16} />
+                    📅 Sync to Google Calendar
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           {canEdit && (
