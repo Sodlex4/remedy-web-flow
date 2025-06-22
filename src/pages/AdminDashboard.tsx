@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +28,7 @@ import { toast } from 'sonner';
 import PickupRequestsTable from '@/components/PickupRequestsTable';
 import RequestDetailModal from '@/components/RequestDetailModal';
 import WhatsAppWidget from '@/components/WhatsAppWidget';
+import NotificationDropdown from '@/components/NotificationDropdown';
 
 interface PickupRequest {
   id: string;
@@ -221,6 +221,22 @@ const AdminDashboard = () => {
     toast.success(`Request marked as ${status}`);
   };
 
+  const markAllRequestsAsSeen = () => {
+    setPickupRequests(prev => 
+      prev.map(req => 
+        req.status === 'new' ? { ...req, status: 'seen' } : req
+      )
+    );
+    toast.success('All requests marked as seen');
+  };
+
+  const handleNotificationRequestClick = (id: string) => {
+    const request = pickupRequests.find(req => req.id === id);
+    if (request) {
+      setSelectedRequest(request);
+    }
+  };
+
   const toggleMute = () => {
     setIsMuted(!isMuted);
     toast.info(isMuted ? 'Notifications unmuted' : 'Notifications muted');
@@ -356,6 +372,13 @@ const AdminDashboard = () => {
                 />
                 <Moon size={16} className="text-muted-foreground" />
               </div>
+              
+              {/* Notification Dropdown */}
+              <NotificationDropdown
+                requests={pickupRequests}
+                onMarkAllSeen={markAllRequestsAsSeen}
+                onRequestClick={handleNotificationRequestClick}
+              />
               
               <Button
                 variant="ghost"
