@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { 
   Menu, 
   X, 
@@ -17,12 +18,17 @@ import {
   CheckCircle,
   Package,
   VolumeX,
-  Volume2
+  Volume2,
+  Moon,
+  Sun,
+  Calendar as CalendarIcon,
+  MessageCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import PickupRequestsTable from '@/components/PickupRequestsTable';
 import RequestDetailModal from '@/components/RequestDetailModal';
+import WhatsAppWidget from '@/components/WhatsAppWidget';
 
 interface PickupRequest {
   id: string;
@@ -42,16 +48,45 @@ const AdminDashboard = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isMuted, setIsMuted] = useState(false);
   const [welcomeVisible, setWelcomeVisible] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [userRole, setUserRole] = useState<'admin' | 'assistant' | 'viewer'>('admin');
   const navigate = useNavigate();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Theme management
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      setIsDarkMode(savedTheme === 'dark');
+    }
+    
+    // Apply theme to document
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem('theme', newTheme ? 'dark' : 'light');
+    
+    if (newTheme) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    
+    toast.success(`Switched to ${newTheme ? 'dark' : 'light'} mode`);
+  };
+
   // Initialize audio for notifications
   useEffect(() => {
-    // Create audio element for pop sound
     audioRef.current = new Audio('/sounds/pop.mp3');
     audioRef.current.volume = 0.6;
     
-    // Fallback to system notification sound if file doesn't exist
     audioRef.current.onerror = () => {
       console.log('Custom sound not found, using system notification');
     };
@@ -104,16 +139,16 @@ const AdminDashboard = () => {
     setPickupRequests(defaultRequests);
   }, []);
 
-  // Simulate real-time updates (replace with Supabase subscription)
+  // Simulate real-time updates with enhanced notifications
   useEffect(() => {
     const interval = setInterval(() => {
-      // Simulate a new request coming in (for demo purposes)
-      const shouldAddNew = Math.random() < 0.1; // 10% chance every 30 seconds
+      const shouldAddNew = Math.random() < 0.1;
       
       if (shouldAddNew) {
+        const customerName = `Customer ${Math.floor(Math.random() * 100)}`;
         const newRequest: PickupRequest = {
           id: `new-${Date.now()}`,
-          customerName: `Customer ${Math.floor(Math.random() * 100)}`,
+          customerName,
           whatsappNumber: `+2547${Math.floor(Math.random() * 100000000)}`,
           items: ['New Strain (1g)', 'Papers'],
           pickupTime: 'anytime',
@@ -129,13 +164,27 @@ const AdminDashboard = () => {
           audioRef.current.play().catch(e => console.log('Audio play failed:', e));
         }
         
-        // Show toast notification
-        toast.success(`🛎️ New Pickup Request from ${newRequest.customerName}`);
+        // Enhanced toast notification
+        toast.success(`📦 New pickup request received from ${customerName}`, {
+          description: "Click to view details",
+          action: {
+            label: "View",
+            onClick: () => setSelectedRequest(newRequest),
+          },
+        });
       }
-    }, 30000); // Check every 30 seconds
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [isMuted]);
+
+  // Welcome message on component mount
+  useEffect(() => {
+    toast.success('Welcome back, CHIZOH 👑', {
+      description: 'Ready to manage your dispensary',
+      duration: 4000,
+    });
+  }, []);
 
   // Check authentication
   useEffect(() => {
@@ -143,15 +192,27 @@ const AdminDashboard = () => {
     if (!isLoggedIn) {
       navigate('/admin/login');
     }
+    
+    // Mock role assignment - replace with actual Supabase role fetch
+    const savedRole = localStorage.getItem('user_role') as 'admin' | 'assistant' | 'viewer';
+    if (savedRole) {
+      setUserRole(savedRole);
+    }
   }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('admin_logged_in');
+    localStorage.removeItem('user_role');
     toast.success('Logged out successfully');
     navigate('/admin/login');
   };
 
   const updateRequestStatus = (id: string, status: 'seen' | 'ready') => {
+    if (userRole === 'viewer') {
+      toast.error('You do not have permission to edit requests');
+      return;
+    }
+    
     setPickupRequests(prev => 
       prev.map(req => 
         req.id === id ? { ...req, status } : req
@@ -175,23 +236,44 @@ const AdminDashboard = () => {
       name: 'Pickup Requests', 
       icon: FileText, 
       active: true,
-      badge: newRequestsCount > 0 ? newRequestsCount : undefined
+      badge: newRequestsCount > 0 ? newRequestsCount : undefined,
+      path: '/admin/dashboard'
     },
-    { name: 'Settings', icon: Settings, active: false },
+    { 
+      name: 'Calendar View', 
+      icon: CalendarIcon, 
+      active: false,
+      path: '/admin/calendar'
+    },
+    { 
+      name: 'Settings', 
+      icon: Settings, 
+      active: false,
+      path: '/admin/settings'
+    },
   ];
 
+  const getRoleColor = () => {
+    switch (userRole) {
+      case 'admin': return 'bg-green-500';
+      case 'assistant': return 'bg-blue-500';
+      case 'viewer': return 'bg-gray-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen bg-background dark:bg-background flex transition-colors duration-300">
       {/* Sidebar */}
-      <div className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transition-transform duration-300 ease-in-out`}>
+      <div className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card dark:bg-card border-r border-border dark:border-border transition-transform duration-300 ease-in-out`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center justify-between p-4 border-b border-border dark:border-border">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <Leaf className="text-primary-foreground" size={16} />
               </div>
-              <span className="font-bold text-foreground">Nature's Remedy</span>
+              <span className="font-bold text-foreground dark:text-foreground">Nature's Remedy</span>
             </div>
             <Button
               variant="ghost"
@@ -203,6 +285,14 @@ const AdminDashboard = () => {
             </Button>
           </div>
 
+          {/* User Role Badge */}
+          <div className="px-4 py-2">
+            <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-white ${getRoleColor()}`}>
+              <User size={12} className="mr-1" />
+              {userRole.toUpperCase()}
+            </div>
+          </div>
+
           {/* Navigation */}
           <nav className="flex-1 p-4">
             <div className="space-y-2">
@@ -211,6 +301,7 @@ const AdminDashboard = () => {
                   key={item.name}
                   variant={item.active ? "secondary" : "ghost"}
                   className="w-full justify-start text-left"
+                  onClick={() => item.path && navigate(item.path)}
                 >
                   <item.icon className="mr-3" size={18} />
                   <span className="flex-1">{item.name}</span>
@@ -225,7 +316,7 @@ const AdminDashboard = () => {
           </nav>
 
           {/* Logout */}
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border dark:border-border">
             <Button
               variant="ghost"
               className="w-full justify-start text-destructive hover:text-destructive"
@@ -241,7 +332,7 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col lg:ml-0">
         {/* Top Navigation */}
-        <header className="bg-card border-b border-border p-4">
+        <header className="bg-card dark:bg-card border-b border-border dark:border-border p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
@@ -252,9 +343,20 @@ const AdminDashboard = () => {
               >
                 <Menu size={20} />
               </Button>
-              <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
+              <h1 className="text-xl font-semibold text-foreground dark:text-foreground">Dashboard</h1>
             </div>
             <div className="flex items-center space-x-3">
+              {/* Theme Toggle */}
+              <div className="flex items-center space-x-2">
+                <Sun size={16} className="text-muted-foreground" />
+                <Switch
+                  checked={isDarkMode}
+                  onCheckedChange={toggleTheme}
+                  className="data-[state=checked]:bg-primary"
+                />
+                <Moon size={16} className="text-muted-foreground" />
+              </div>
+              
               <Button
                 variant="ghost"
                 size="icon"
@@ -275,13 +377,13 @@ const AdminDashboard = () => {
         <main className="flex-1 p-6">
           {/* Welcome Banner */}
           {welcomeVisible && (
-            <div className="mb-8 bg-gradient-to-r from-primary/20 to-green-600/20 rounded-lg p-6 border border-primary/30 animate-fade-in">
+            <div className="mb-8 bg-gradient-to-r from-primary/20 to-green-600/20 dark:from-primary/20 dark:to-green-600/20 rounded-lg p-6 border border-primary/30 animate-fade-in">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-foreground mb-2">
+                  <h1 className="text-3xl font-bold text-foreground dark:text-foreground mb-2">
                     WELCOME CHIZOH 👋
                   </h1>
-                  <p className="text-lg text-muted-foreground">
+                  <p className="text-lg text-muted-foreground dark:text-muted-foreground">
                     {newRequestsCount > 0 
                       ? `You've got ${newRequestsCount} new pickup requests waiting` 
                       : "All caught up! Here's your overview for today"
@@ -302,12 +404,12 @@ const AdminDashboard = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-card border-border">
+            <Card className="bg-card dark:bg-card border-border dark:border-border">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-muted-foreground text-sm">New Requests</p>
-                    <p className="text-2xl font-bold text-foreground">{newRequestsCount}</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground text-sm">New Requests</p>
+                    <p className="text-2xl font-bold text-foreground dark:text-foreground">{newRequestsCount}</p>
                   </div>
                   <div className="w-12 h-12 bg-destructive/20 rounded-full flex items-center justify-center">
                     <Clock className="text-destructive" size={24} />
@@ -316,12 +418,12 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border">
+            <Card className="bg-card dark:bg-card border-border dark:border-border">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-muted-foreground text-sm">Total Requests</p>
-                    <p className="text-2xl font-bold text-foreground">{pickupRequests.length}</p>
+                    <p className="text-muted-foreground dark:text-muted-foreground text-sm">Total Requests</p>
+                    <p className="text-2xl font-bold text-foreground dark:text-foreground">{pickupRequests.length}</p>
                   </div>
                   <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center">
                     <FileText className="text-primary" size={24} />
@@ -330,12 +432,12 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border">
+            <Card className="bg-card dark:bg-card border-border dark:border-border">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-muted-foreground text-sm">Ready for Pickup</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-muted-foreground dark:text-muted-foreground text-sm">Ready for Pickup</p>
+                    <p className="text-2xl font-bold text-foreground dark:text-foreground">
                       {pickupRequests.filter(r => r.status === 'ready').length}
                     </p>
                   </div>
@@ -346,12 +448,12 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-card border-border">
+            <Card className="bg-card dark:bg-card border-border dark:border-border">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-muted-foreground text-sm">Total Value</p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-muted-foreground dark:text-muted-foreground text-sm">Total Value</p>
+                    <p className="text-2xl font-bold text-foreground dark:text-foreground">
                       KSh {pickupRequests.reduce((sum, req) => sum + req.totalAmount, 0).toLocaleString()}
                     </p>
                   </div>
@@ -364,10 +466,10 @@ const AdminDashboard = () => {
           </div>
 
           {/* Pickup Requests Table */}
-          <Card className="bg-card border-border">
+          <Card className="bg-card dark:bg-card border-border dark:border-border">
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-                <CardTitle className="text-foreground">Pickup Requests</CardTitle>
+                <CardTitle className="text-foreground dark:text-foreground">Pickup Requests</CardTitle>
                 <div className="flex flex-wrap gap-2">
                   {['all', 'new', 'seen', 'ready'].map((status) => (
                     <Button
@@ -387,18 +489,22 @@ const AdminDashboard = () => {
                 requests={filteredRequests}
                 onRequestClick={setSelectedRequest}
                 onUpdateStatus={updateRequestStatus}
+                userRole={userRole}
               />
             </CardContent>
           </Card>
         </main>
 
         {/* Footer */}
-        <footer className="bg-card border-t border-border p-4 text-center">
-          <p className="text-sm text-muted-foreground">
+        <footer className="bg-card dark:bg-card border-t border-border dark:border-border p-4 text-center">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground">
             Licensed Admin Area — Nature's Remedy © 2025
           </p>
         </footer>
       </div>
+
+      {/* WhatsApp Widget */}
+      <WhatsAppWidget />
 
       {/* Overlay for mobile sidebar */}
       {isSidebarOpen && (
@@ -415,6 +521,7 @@ const AdminDashboard = () => {
           isOpen={!!selectedRequest}
           onClose={() => setSelectedRequest(null)}
           onUpdateStatus={updateRequestStatus}
+          userRole={userRole}
         />
       )}
     </div>

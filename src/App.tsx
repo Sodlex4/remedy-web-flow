@@ -9,6 +9,7 @@ import RequestPickup from "./pages/RequestPickup";
 import StrainSearch from "./pages/StrainSearch";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import PickupCalendar from "./pages/PickupCalendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/request-pickup" element={<RequestPickup />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/calendar" element={<PickupCalendar />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
