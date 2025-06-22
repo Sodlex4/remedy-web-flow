@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { 
   Menu, 
@@ -12,7 +14,11 @@ import {
   Phone,
   CheckCircle,
   Clock,
-  User
+  User,
+  Search,
+  Filter,
+  Calendar as CalendarIcon,
+  Download
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -24,23 +30,29 @@ interface PickupRequest {
   whatsappNumber: string;
   items: string[];
   pickupTime: string;
-  status: 'new' | 'seen' | 'ready' | 'completed';
+  status: 'pending' | 'confirmed' | 'completed';
   createdAt: string;
   totalAmount: number;
   scheduledDate?: string;
+  strain?: string;
 }
 
 const PickupCalendar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [pickupRequests, setPickupRequests] = useState<PickupRequest[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [strainFilter, setStrainFilter] = useState<string>('all');
   const navigate = useNavigate();
 
-  // Mock data with scheduled dates
+  // Mock data with enhanced status and strains
   useEffect(() => {
     const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+    const dayAfter = new Date(today);
+    dayAfter.setDate(dayAfter.getDate() + 2);
     
     const mockRequests: PickupRequest[] = [
       {
@@ -49,21 +61,23 @@ const PickupCalendar = () => {
         whatsappNumber: '+254700123456',
         items: ['Blue Dream (1g)', 'RAW Papers (2 packs)'],
         pickupTime: 'morning',
-        status: 'ready',
+        status: 'confirmed',
         createdAt: '2025-01-21T10:30:00Z',
         totalAmount: 1900,
-        scheduledDate: format(today, 'yyyy-MM-dd')
+        scheduledDate: format(today, 'yyyy-MM-dd'),
+        strain: 'Blue Dream'
       },
       {
         id: '2',
-        customerName: 'Jane M.',
+        customerName: 'Jane Miller',
         whatsappNumber: '+254701234567',
         items: ['Girl Scout Cookies (2g)', 'Grinder (1pc)'],
         pickupTime: 'afternoon',
-        status: 'seen',
+        status: 'pending',
         createdAt: '2025-01-21T08:15:00Z',
         totalAmount: 3200,
-        scheduledDate: format(tomorrow, 'yyyy-MM-dd')
+        scheduledDate: format(tomorrow, 'yyyy-MM-dd'),
+        strain: 'Girl Scout Cookies'
       },
       {
         id: '3',
@@ -71,19 +85,61 @@ const PickupCalendar = () => {
         whatsappNumber: '+254702345678',
         items: ['OG Kush (1g)', 'Lighter'],
         pickupTime: 'evening',
-        status: 'new',
+        status: 'completed',
         createdAt: '2025-01-20T16:45:00Z',
         totalAmount: 1600,
-        scheduledDate: format(today, 'yyyy-MM-dd')
+        scheduledDate: format(dayAfter, 'yyyy-MM-dd'),
+        strain: 'OG Kush'
+      },
+      {
+        id: '4',
+        customerName: 'Sarah Wilson',
+        whatsappNumber: '+254703456789',
+        items: ['White Widow (1.5g)'],
+        pickupTime: 'morning',
+        status: 'pending',
+        createdAt: '2025-01-22T09:20:00Z',
+        totalAmount: 2400,
+        scheduledDate: format(today, 'yyyy-MM-dd'),
+        strain: 'White Widow'
       }
     ];
     
     setPickupRequests(mockRequests);
   }, []);
 
+  const getFilteredRequests = () => {
+    return pickupRequests.filter(req => {
+      const matchesSearch = req.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           req.whatsappNumber.includes(searchTerm) ||
+                           req.strain?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || req.status === statusFilter;
+      const matchesStrain = strainFilter === 'all' || req.strain === strainFilter;
+      
+      return matchesSearch && matchesStatus && matchesStrain;
+    });
+  };
+
   const getRequestsForDate = (date: Date) => {
     const dateString = format(date, 'yyyy-MM-dd');
-    return pickupRequests.filter(req => req.scheduledDate === dateString);
+    return getFilteredRequests().filter(req => req.scheduledDate === dateString);
+  };
+
+  const getWeeklyStats = () => {
+    const filtered = getFilteredRequests();
+    const thisWeek = filtered.filter(req => {
+      const reqDate = new Date(req.scheduledDate || req.createdAt);
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      return reqDate >= weekStart;
+    });
+
+    return {
+      total: thisWeek.length,
+      pending: thisWeek.filter(r => r.status === 'pending').length,
+      confirmed: thisWeek.filter(r => r.status === 'confirmed').length,
+      completed: thisWeek.filter(r => r.status === 'completed').length
+    };
   };
 
   const markAsCompleted = (id: string) => {
@@ -97,9 +153,8 @@ const PickupCalendar = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-red-500';
-      case 'seen': return 'bg-yellow-500';
-      case 'ready': return 'bg-green-500';
+      case 'pending': return 'bg-yellow-500';
+      case 'confirmed': return 'bg-green-500';
       case 'completed': return 'bg-gray-500';
       default: return 'bg-gray-500';
     }
@@ -112,6 +167,20 @@ const PickupCalendar = () => {
   };
 
   const selectedDateRequests = getRequestsForDate(selectedDate);
+  const weeklyStats = getWeeklyStats();
+  const uniqueStrains = [...new Set(pickupRequests.map(req => req.strain).filter(Boolean))];
+
+  const exportToCalendar = (request: PickupRequest) => {
+    const startDate = new Date(request.scheduledDate + 'T' + (
+      request.pickupTime === 'morning' ? '09:00:00' :
+      request.pickupTime === 'afternoon' ? '14:00:00' : '18:00:00'
+    ));
+    const endDate = new Date(startDate.getTime() + 30 * 60000); // 30 minutes
+
+    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Pickup: ${request.customerName}&dates=${startDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z/${endDate.toISOString().replace(/[-:]/g, '').split('.')[0]}Z&details=Pickup for ${request.customerName}%0AItems: ${request.items.join(', ')}%0APhone: ${request.whatsappNumber}`;
+    
+    window.open(googleUrl, '_blank');
+  };
 
   return (
     <div className="min-h-screen bg-background dark:bg-background flex transition-colors duration-300">
@@ -175,6 +244,74 @@ const PickupCalendar = () => {
           </div>
         </header>
 
+        {/* Stats and Filters */}
+        <div className="p-6 border-b border-border dark:border-border">
+          {/* Weekly Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <Card className="bg-card dark:bg-card border-border dark:border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-primary">{weeklyStats.total}</div>
+                <div className="text-sm text-muted-foreground dark:text-muted-foreground">This Week</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card dark:bg-card border-border dark:border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-yellow-500">{weeklyStats.pending}</div>
+                <div className="text-sm text-muted-foreground dark:text-muted-foreground">Pending</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card dark:bg-card border-border dark:border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-green-500">{weeklyStats.confirmed}</div>
+                <div className="text-sm text-muted-foreground dark:text-muted-foreground">Confirmed</div>
+              </CardContent>
+            </Card>
+            <Card className="bg-card dark:bg-card border-border dark:border-border">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-gray-500">{weeklyStats.completed}</div>
+                <div className="text-sm text-muted-foreground dark:text-muted-foreground">Completed</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground dark:text-muted-foreground" size={16} />
+              <Input
+                placeholder="Search customers, phone, or strain..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-card dark:bg-card border-border dark:border-border"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-40 bg-card dark:bg-card border-border dark:border-border">
+                <Filter size={16} className="mr-2" />
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={strainFilter} onValueChange={setStrainFilter}>
+              <SelectTrigger className="w-full md:w-40 bg-card dark:bg-card border-border dark:border-border">
+                <Leaf size={16} className="mr-2" />
+                <SelectValue placeholder="Strain" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Strains</SelectItem>
+                {uniqueStrains.map(strain => (
+                  <SelectItem key={strain} value={strain!}>{strain}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Calendar Content */}
         <main className="flex-1 p-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -190,11 +327,22 @@ const PickupCalendar = () => {
                   onSelect={(date) => date && setSelectedDate(date)}
                   className="rounded-md border border-border dark:border-border"
                   modifiers={{
-                    hasPickups: (date) => getRequestsForDate(date).length > 0
+                    hasPickups: (date) => getRequestsForDate(date).length > 0,
+                    hasPending: (date) => getRequestsForDate(date).some(r => r.status === 'pending'),
+                    hasConfirmed: (date) => getRequestsForDate(date).some(r => r.status === 'confirmed'),
+                    hasCompleted: (date) => getRequestsForDate(date).some(r => r.status === 'completed')
                   }}
                   modifiersStyles={{
                     hasPickups: {
                       backgroundColor: 'rgb(74 222 128 / 0.2)',
+                      borderRadius: '50%'
+                    },
+                    hasPending: {
+                      backgroundColor: 'rgb(234 179 8 / 0.2)',
+                      borderRadius: '50%'
+                    },
+                    hasConfirmed: {
+                      backgroundColor: 'rgb(34 197 94 / 0.2)',
                       borderRadius: '50%'
                     }
                   }}
@@ -203,9 +351,19 @@ const PickupCalendar = () => {
                 {/* Legend */}
                 <div className="mt-4 p-3 bg-muted dark:bg-muted rounded-lg">
                   <p className="text-sm font-medium text-foreground dark:text-foreground mb-2">Legend:</p>
-                  <div className="flex items-center space-x-2 text-xs text-muted-foreground dark:text-muted-foreground">
-                    <div className="w-3 h-3 bg-green-300 rounded-full"></div>
-                    <span>Has scheduled pickups</span>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-yellow-300 rounded-full"></div>
+                      <span className="text-muted-foreground dark:text-muted-foreground">Pending</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-green-300 rounded-full"></div>
+                      <span className="text-muted-foreground dark:text-muted-foreground">Confirmed</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+                      <span className="text-muted-foreground dark:text-muted-foreground">Completed</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -258,6 +416,10 @@ const PickupCalendar = () => {
                               </div>
                               
                               <div className="text-sm text-muted-foreground dark:text-muted-foreground mb-2">
+                                <strong>Strain:</strong> {request.strain}
+                              </div>
+                              
+                              <div className="text-sm text-muted-foreground dark:text-muted-foreground mb-2">
                                 <strong>Items:</strong> {request.items.join(', ')}
                               </div>
                               
@@ -281,6 +443,15 @@ const PickupCalendar = () => {
                                   Mark Complete
                                 </Button>
                               )}
+                              
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => exportToCalendar(request)}
+                              >
+                                <Download size={16} className="mr-1" />
+                                Export
+                              </Button>
                               
                               <Button
                                 variant="outline"
