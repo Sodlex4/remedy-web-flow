@@ -313,16 +313,16 @@ const AdminDashboard = () => {
       path: '/admin/dashboard'
     },
     { 
-      name: 'Ratings', 
-      icon: Star, 
-      active: false,
-      path: '/admin/ratings'
-    },
-    { 
       name: 'Messages', 
       icon: MessageCircle, 
       active: false,
       path: '/admin/messages'
+    },
+    { 
+      name: 'Ratings', 
+      icon: Star, 
+      active: false,
+      path: '/admin/ratings'
     },
     { 
       name: 'Settings', 

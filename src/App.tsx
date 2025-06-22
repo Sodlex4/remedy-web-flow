@@ -10,6 +10,9 @@ import StrainSearch from "./pages/StrainSearch";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import PickupCalendar from "./pages/PickupCalendar";
+import AdminMessages from "./pages/AdminMessages";
+import AdminRatings from "./pages/AdminRatings";
+import AdminSettings from "./pages/AdminSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +30,9 @@ const App = () => (
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/calendar" element={<PickupCalendar />} />
+          <Route path="/admin/messages" element={<AdminMessages />} />
+          <Route path="/admin/ratings" element={<AdminRatings />} />
+          <Route path="/admin/settings" element={<AdminSettings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
