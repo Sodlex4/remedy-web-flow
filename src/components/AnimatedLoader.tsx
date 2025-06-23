@@ -96,6 +96,14 @@ const AnimatedLoader = ({ onComplete }: AnimatedLoaderProps) => {
     };
   }, [onComplete]);
 
+  const handleImageError = () => {
+    console.log("Image failed to load, using fallback");
+    // If image fails to load, still run animations on a fallback element
+    if (imageRef.current) {
+      imageRef.current.style.display = 'none';
+    }
+  };
+
   return (
     <div 
       ref={loaderRef}
@@ -114,6 +122,8 @@ const AnimatedLoader = ({ onComplete }: AnimatedLoaderProps) => {
         style={{
           filter: 'drop-shadow(0 0 20px #4caf50)'
         }}
+        onError={handleImageError}
+        onLoad={() => console.log("Image loaded successfully")}
       />
       
       <p 
