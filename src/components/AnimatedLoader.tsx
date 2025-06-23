@@ -1,6 +1,7 @@
 
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import Typed from 'typed.js';
 
 interface AnimatedLoaderProps {
   onComplete: () => void;
@@ -8,99 +9,118 @@ interface AnimatedLoaderProps {
 
 const AnimatedLoader = ({ onComplete }: AnimatedLoaderProps) => {
   const loaderRef = useRef<HTMLDivElement>(null);
-  const leafRef = useRef<SVGSVGElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const textRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
+    // Initialize Typed.js for the text
+    let typed: Typed | null = null;
+    
+    if (textRef.current) {
+      typed = new Typed(textRef.current, {
+        strings: ["Don't Panic, It's Organic"],
+        typeSpeed: 80,
+        showCursor: true,
+        cursorChar: '|',
+        startDelay: 1000,
+        onComplete: () => {
+          // Hide cursor after typing is complete
+          if (textRef.current) {
+            const cursor = textRef.current.querySelector('.typed-cursor');
+            if (cursor) {
+              gsap.to(cursor, { opacity: 0, duration: 0.5 });
+            }
+          }
+        }
+      });
+    }
+
+    // GSAP Animation Timeline
     const tl = gsap.timeline({
       onComplete: () => {
-        setTimeout(onComplete, 500);
+        setTimeout(onComplete, 300);
       }
     });
 
     // Initial state
-    gsap.set([leafRef.current, textRef.current], { opacity: 0, scale: 0.5 });
+    gsap.set([imageRef.current, textRef.current], { 
+      scale: 0.3, 
+      opacity: 0 
+    });
 
     // Animation sequence
-    tl.to(leafRef.current, {
+    tl.to(imageRef.current, {
+      scale: 1.2,
       opacity: 1,
-      scale: 1,
-      duration: 1,
+      duration: 2,
       ease: "power2.out"
     })
-    .to(leafRef.current, {
+    .to(imageRef.current, {
       scale: 1.1,
-      duration: 0.8,
+      duration: 1.5,
       yoyo: true,
       repeat: 1,
       ease: "power2.inOut"
-    }, "-=0.5")
+    }, "-=1")
     .to(textRef.current, {
-      opacity: 1,
       scale: 1,
+      opacity: 1,
       duration: 0.8,
       ease: "power2.out"
-    }, "-=0.5")
-    .to([leafRef.current, textRef.current], {
+    }, "-=1.5")
+    .to([imageRef.current, textRef.current], {
       opacity: 0,
       scale: 0.8,
-      duration: 0.8,
+      duration: 1,
       ease: "power2.in"
-    }, "+=1")
+    }, "+=0.5")
     .to(loaderRef.current, {
       opacity: 0,
       duration: 0.5,
       ease: "power2.inOut"
     });
 
-    // Pulsing glow effect
-    gsap.to(leafRef.current, {
-      filter: "drop-shadow(0 0 20px #4caf50) drop-shadow(0 0 40px #4caf5080)",
+    // Continuous glow effect
+    gsap.to(imageRef.current, {
+      filter: "drop-shadow(0 0 30px #4caf50) drop-shadow(0 0 60px #4caf5060)",
       duration: 2,
       yoyo: true,
       repeat: -1,
       ease: "power2.inOut"
     });
 
+    return () => {
+      if (typed) {
+        typed.destroy();
+      }
+    };
   }, [onComplete]);
 
   return (
     <div 
       ref={loaderRef}
-      className="fixed inset-0 bg-background z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
+      style={{ 
+        background: '#0d0d0d',
+        width: '100vw',
+        height: '100vh'
+      }}
     >
-      <div className="text-center">
-        <svg
-          ref={leafRef}
-          width="120"
-          height="120"
-          viewBox="0 0 100 100"
-          className="mb-6"
-        >
-          <path
-            d="M50 10 C35 20, 25 35, 30 50 C35 65, 45 75, 50 85 C55 75, 65 65, 70 50 C75 35, 65 20, 50 10 Z"
-            fill="#4caf50"
-            stroke="#2e7d32"
-            strokeWidth="2"
-          />
-          <path
-            d="M50 10 C40 25, 35 40, 40 55 C45 70, 50 80, 50 85"
-            fill="none"
-            stroke="#2e7d32"
-            strokeWidth="1.5"
-          />
-          <path
-            d="M50 10 C60 25, 65 40, 60 55 C55 70, 50 80, 50 85"
-            fill="none"
-            stroke="#2e7d32"
-            strokeWidth="1.5"
-          />
-        </svg>
-        
-        <div ref={textRef} className="text-primary text-xl font-semibold">
-          Don't Panic, It's Organic
-        </div>
-      </div>
+      <img
+        ref={imageRef}
+        src="/weed.png"
+        alt="Nature's Remedy"
+        className="w-36 h-36 md:w-40 md:h-40"
+        style={{
+          filter: 'drop-shadow(0 0 20px #4caf50)'
+        }}
+      />
+      
+      <p 
+        ref={textRef}
+        className="mt-6 text-primary text-lg md:text-xl font-semibold font-['Poppins',sans-serif] text-center"
+      >
+      </p>
     </div>
   );
 };
