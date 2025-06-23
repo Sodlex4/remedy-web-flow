@@ -2,9 +2,12 @@
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import Typed from 'typed.js';
+import { gsap } from 'gsap';
 
 const HeroSection = () => {
   const typedRef = useRef<HTMLSpanElement>(null);
+  const heroImageRef = useRef<HTMLDivElement>(null);
+  const floatingElementsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typedRef.current) {
@@ -22,6 +25,31 @@ const HeroSection = () => {
       return () => {
         typed.destroy();
       };
+    }
+  }, []);
+
+  useEffect(() => {
+    // Animate hero image on mount
+    if (heroImageRef.current) {
+      gsap.fromTo(heroImageRef.current,
+        { scale: 0.8, opacity: 0, rotation: -5 },
+        { scale: 1, opacity: 1, rotation: 0, duration: 1.5, ease: "power2.out", delay: 0.5 }
+      );
+    }
+
+    // Animate floating elements
+    if (floatingElementsRef.current) {
+      const elements = floatingElementsRef.current.children;
+      Array.from(elements).forEach((element, index) => {
+        gsap.to(element, {
+          y: -20,
+          duration: 2 + index * 0.5,
+          yoyo: true,
+          repeat: -1,
+          ease: "power2.inOut",
+          delay: index * 0.3
+        });
+      });
     }
   }, []);
 
@@ -50,7 +78,7 @@ const HeroSection = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
                 onClick={scrollToShop}
-                className="bg-primary hover:bg-secondary text-primary-foreground px-8 py-3 text-lg"
+                className="bg-primary hover:bg-secondary text-primary-foreground px-8 py-3 text-lg gsap-zoom"
               >
                 Explore Our Strains
               </Button>
@@ -58,30 +86,37 @@ const HeroSection = () => {
               <Button 
                 variant="outline" 
                 onClick={() => document.querySelector('#about')?.scrollIntoView({ behavior: 'smooth' })}
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 text-lg"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 text-lg gsap-fade"
               >
                 Learn More
               </Button>
             </div>
           </div>
 
-          {/* Right Content - Image */}
+          {/* Right Content - Enhanced Image */}
           <div className="flex justify-center lg:justify-end">
-            <div className="relative">
-              <div className="w-80 h-80 md:w-96 md:h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center overflow-hidden">
-                <div className="w-72 h-72 md:w-88 md:h-88 bg-card rounded-full flex items-center justify-center border border-primary/30">
-                  <div className="text-center text-primary">
+            <div className="relative" ref={heroImageRef}>
+              <div className="w-80 h-80 md:w-96 md:h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm">
+                <div className="w-72 h-72 md:w-88 md:h-88 bg-card rounded-full flex items-center justify-center border border-primary/30 relative">
+                  <div className="text-center text-primary relative z-10">
                     <div className="w-32 h-32 mx-auto mb-4 bg-primary/20 rounded-full flex items-center justify-center">
                       <span className="text-4xl">🌿</span>
                     </div>
                     <p className="text-sm">Premium Cannabis</p>
                   </div>
+                  
+                  {/* Animated glow effect */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/10 to-secondary/10 animate-pulse"></div>
                 </div>
               </div>
               
-              {/* Floating elements */}
-              <div className="absolute -top-4 -right-4 w-8 h-8 bg-primary rounded-full animate-bounce"></div>
-              <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-secondary rounded-full animate-bounce" style={{ animationDelay: '1s' }}></div>
+              {/* Enhanced floating elements */}
+              <div ref={floatingElementsRef}>
+                <div className="absolute -top-4 -right-4 w-8 h-8 bg-primary rounded-full"></div>
+                <div className="absolute -bottom-4 -left-4 w-6 h-6 bg-secondary rounded-full"></div>
+                <div className="absolute top-1/2 -left-8 w-4 h-4 bg-primary/60 rounded-full"></div>
+                <div className="absolute bottom-1/4 -right-8 w-5 h-5 bg-secondary/60 rounded-full"></div>
+              </div>
             </div>
           </div>
         </div>

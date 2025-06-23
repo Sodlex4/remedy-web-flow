@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import AgeVerificationModal from '@/components/AgeVerificationModal';
 import StarryBackground from '@/components/StarryBackground';
@@ -10,9 +11,16 @@ import FeedbackModal from '@/components/FeedbackModal';
 import WhatsAppWidget from '@/components/WhatsAppWidget';
 import TypedFooter from '@/components/TypedFooter';
 import Footer from '@/components/Footer';
+import AnimatedLoader from '@/components/AnimatedLoader';
+import AnimatedSVGBackground from '@/components/AnimatedSVGBackground';
+import { useScrollAnimations } from '@/hooks/useScrollAnimations';
 
 const Index = () => {
   const [showAgeModal, setShowAgeModal] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
+  const [contentVisible, setContentVisible] = useState(false);
+
+  useScrollAnimations();
 
   useEffect(() => {
     // Check if user has already verified their age
@@ -27,32 +35,62 @@ const Index = () => {
     setShowAgeModal(false);
   };
 
+  const handleLoaderComplete = () => {
+    setShowLoader(false);
+    setContentVisible(true);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-x-hidden">
-      <StarryBackground />
+      {showLoader && <AnimatedLoader onComplete={handleLoaderComplete} />}
       
-      <AgeVerificationModal 
-        isOpen={showAgeModal} 
-        onClose={handleAgeVerification} 
-      />
-      
-      <Navigation />
-      <HeroSection />
-      <ProductShowcase />
-      <AboutSection />
-      <ContactSection />
-      
-      {/* Feedback Modal */}
-      <FeedbackModal />
-      
-      {/* WhatsApp Widget */}
-      <WhatsAppWidget />
-      
-      {/* Typed Footer */}
-      <TypedFooter />
-      
-      {/* Main Footer */}
-      <Footer />
+      {contentVisible && (
+        <>
+          <StarryBackground />
+          <AnimatedSVGBackground />
+          
+          <AgeVerificationModal 
+            isOpen={showAgeModal} 
+            onClose={handleAgeVerification} 
+          />
+          
+          <div className="gsap-fade">
+            <Navigation />
+          </div>
+          
+          <div className="gsap-slide-up">
+            <HeroSection />
+          </div>
+          
+          <div className="gsap-zoom">
+            <ProductShowcase />
+          </div>
+          
+          <div className="gsap-fade">
+            <AboutSection />
+          </div>
+          
+          <div className="gsap-slide-up">
+            <ContactSection />
+          </div>
+          
+          {/* Feedback Modal */}
+          <FeedbackModal />
+          
+          {/* WhatsApp Widget */}
+          <WhatsAppWidget />
+          
+          {/* Typed Footer */}
+          <div className="gsap-fade">
+            <TypedFooter />
+          </div>
+          
+          {/* Main Footer */}
+          <div className="gsap-fade">
+            <Footer />
+          </div>
+        </>
+      )}
     </div>
   );
 };
