@@ -1,4 +1,4 @@
-import { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -18,25 +18,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
-
-interface PickupRequest {
-  id: string;
-  customerName: string;
-  whatsappNumber: string;
-  items: string[];
-  pickupTime: string;
-  status: 'new' | 'seen' | 'ready' | 'completed';
-  createdAt: string;
-  totalAmount: number;
-}
-
-interface PickupRequestsTableProps {
-  requests: PickupRequest[];
-  onRequestClick: (request: PickupRequest) => void;
-  onUpdateStatus: (id: string, status: 'seen' | 'ready' | 'completed') => void;
-  onDeleteRequest?: (id: string) => void;
-  userRole: 'admin' | 'assistant' | 'viewer';
-}
+import { PickupRequest, PickupRequestsTableProps } from '@/types/pickupRequest';
 
 const PickupRequestsTable = ({ 
   requests, 
@@ -110,7 +92,9 @@ const PickupRequestsTable = ({
               return (
                 <TableRow 
                   key={request.id}
-                  className="hover:bg-muted/50 dark:hover:bg-muted/50 cursor-pointer transition-colors"
+                  className={`hover:bg-muted/50 dark:hover:bg-muted/50 cursor-pointer transition-all duration-300 ${
+                    request.status === 'new' ? 'animate-pulse bg-red-50 dark:bg-red-950/20' : ''
+                  }`}
                   onClick={() => onRequestClick(request)}
                 >
                   <TableCell>
@@ -223,7 +207,9 @@ const PickupRequestsTable = ({
           return (
             <div
               key={request.id}
-              className="bg-card dark:bg-card border border-border dark:border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
+              className={`bg-card dark:bg-card border border-border dark:border-border rounded-lg p-4 cursor-pointer hover:shadow-md transition-all duration-300 ${
+                request.status === 'new' ? 'animate-pulse border-red-300 dark:border-red-600' : ''
+              }`}
               onClick={() => onRequestClick(request)}
             >
               <div className="flex items-center justify-between mb-3">

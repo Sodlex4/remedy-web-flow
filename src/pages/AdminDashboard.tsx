@@ -26,7 +26,8 @@ import {
   BarChart3,
   Filter,
   Search,
-  Trash2
+  Trash2,
+  Bell
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -35,6 +36,9 @@ import RequestDetailModal from '@/components/RequestDetailModal';
 import WhatsAppWidget from '@/components/WhatsAppWidget';
 import NotificationDropdown from '@/components/NotificationDropdown';
 import { supabase, SupabasePickupRequest } from '@/lib/supabase';
+import { PickupRequest } from '@/types/pickupRequest';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 
 // Use a consistent interface that matches the table component
 interface PickupRequest {
@@ -62,8 +66,10 @@ const AdminDashboard = () => {
   const [userRole, setUserRole] = useState<'admin' | 'assistant' | 'viewer'>('admin');
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  const { playNotification, initializeAudio } = useNotificationSound();
 
   // Theme management
   useEffect(() => {
@@ -93,15 +99,10 @@ const AdminDashboard = () => {
     toast.success(`Switched to ${newTheme ? 'dark' : 'light'} mode`);
   };
 
-  // Initialize audio for notifications
+  // Initialize audio
   useEffect(() => {
-    audioRef.current = new Audio('/sounds/pop.mp3');
-    audioRef.current.volume = 0.6;
-    
-    audioRef.current.onerror = () => {
-      console.log('Custom sound not found, using system notification');
-    };
-  }, []);
+    initializeAudio();
+  }, [initializeAudio]);
 
   // Convert Supabase data to internal format
   const convertSupabaseToInternal = (supabaseRequest: SupabasePickupRequest): PickupRequest => {
@@ -135,6 +136,10 @@ const AdminDashboard = () => {
       if (data) {
         const formattedRequests = data.map(convertSupabaseToInternal);
         setPickupRequests(formattedRequests);
+        
+        // Set initial unread count
+        const newRequests = formattedRequests.filter(req => req.status === 'new');
+        setUnreadCount(newRequests.length);
       }
     } catch (error) {
       console.error('Error loading pickup requests:', error);
@@ -144,70 +149,62 @@ const AdminDashboard = () => {
     }
   };
 
+  // Real-time event handlers
+  const handleNewRequest = (newRequest: PickupRequest) => {
+    setPickupRequests(prev => [newRequest, ...prev]);
+    setUnreadCount(prev => prev + 1);
+    
+    // Add glow effect to new requests
+    setTimeout(() => {
+      const newRow = document.querySelector(`[data-request-id="${newRequest.id}"]`);
+      if (newRow) {
+        newRow.classList.add('animate-pulse', 'ring-2', 'ring-green-400');
+        setTimeout(() => {
+          newRow.classList.remove('animate-pulse', 'ring-2', 'ring-green-400');
+        }, 3000);
+      }
+    }, 100);
+  };
+
+  const handleUpdateRequest = (updatedRequest: PickupRequest) => {
+    setPickupRequests(prev => 
+      prev.map(req => req.id === updatedRequest.id ? updatedRequest : req)
+    );
+    
+    // Update unread count if status changed from 'new'
+    if (updatedRequest.status !== 'new') {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+  };
+
+  const handleDeleteRequest = (deletedId: string) => {
+    setPickupRequests(prev => {
+      const deletedRequest = prev.find(req => req.id === deletedId);
+      if (deletedRequest?.status === 'new') {
+        setUnreadCount(prevCount => Math.max(0, prevCount - 1));
+      }
+      return prev.filter(req => req.id !== deletedId);
+    });
+  };
+
   // Set up real-time subscription
+  useSupabaseRealtime({
+    onNewRequest: handleNewRequest,
+    onUpdateRequest: handleUpdateRequest,
+    onDeleteRequest: handleDeleteRequest,
+    playNotification,
+    isMuted
+  });
+
+  // Load data on mount
   useEffect(() => {
     loadPickupRequests();
-
-    // Set up real-time subscription for new requests
-    const channel = supabase
-      .channel('realtime:pickup_requests')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'pickup_requests' },
-        (payload) => {
-          console.log('🔄 New pickup request:', payload.new);
-          const newRequest = convertSupabaseToInternal(payload.new as SupabasePickupRequest);
-          
-          setPickupRequests(prev => [newRequest, ...prev]);
-          
-          // Play notification sound
-          if (!isMuted && audioRef.current) {
-            audioRef.current.play().catch(e => console.log('Audio play failed:', e));
-          }
-          
-          toast.success(`📦 New pickup request from ${newRequest.customerName}`, {
-            description: "Click to view details",
-            action: {
-              label: "View",
-              onClick: () => setSelectedRequest(newRequest),
-            },
-          });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'pickup_requests' },
-        (payload) => {
-          console.log('🔄 Updated pickup request:', payload.new);
-          const updatedRequest = convertSupabaseToInternal(payload.new as SupabasePickupRequest);
-          
-          setPickupRequests(prev => 
-            prev.map(req => req.id === updatedRequest.id ? updatedRequest : req)
-          );
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'pickup_requests' },
-        (payload) => {
-          console.log('🗑️ Deleted pickup request:', payload.old);
-          const deletedId = payload.old.id.toString();
-          
-          setPickupRequests(prev => prev.filter(req => req.id !== deletedId));
-          toast.info('Pickup request deleted');
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isMuted]);
+  }, []);
 
   // Welcome message on component mount
   useEffect(() => {
     toast.success('Welcome back, CHIZOH 👑', {
-      description: 'Connected to live Supabase data',
+      description: 'Connected to live Supabase data with real-time notifications',
       duration: 4000,
     });
   }, []);
@@ -304,6 +301,7 @@ const AdminDashboard = () => {
         return;
       }
 
+      setUnreadCount(0);
       toast.success('All requests marked as seen');
     } catch (error) {
       console.error('Error marking all as seen:', error);
@@ -320,7 +318,7 @@ const AdminDashboard = () => {
 
   const toggleMute = () => {
     setIsMuted(!isMuted);
-    toast.info(isMuted ? 'Notifications unmuted' : 'Notifications muted');
+    toast.info(isMuted ? 'Notifications unmuted 🔊' : 'Notifications muted 🔇');
   };
 
   const handleGoogleAuth = () => {
@@ -545,7 +543,7 @@ const AdminDashboard = () => {
                   Welcome Chizoh 👑
                 </h1>
                 <p className="text-sm text-muted-foreground hidden sm:block">
-                  {loading ? 'Loading live data...' : 'Connected to live Supabase data'}
+                  {loading ? 'Loading live data...' : 'Connected to live Supabase data with real-time notifications'}
                 </p>
               </div>
             </div>
@@ -560,6 +558,25 @@ const AdminDashboard = () => {
                   className="data-[state=checked]:bg-primary"
                 />
                 <Moon size={16} className="text-muted-foreground" />
+              </div>
+              
+              {/* Notification Bell */}
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-foreground rounded-xl"
+                >
+                  <Bell size={16} />
+                  {unreadCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center animate-pulse"
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Badge>
+                  )}
+                </Button>
               </div>
               
               {/* Notification Dropdown */}
@@ -692,6 +709,11 @@ const AdminDashboard = () => {
             <CardHeader>
               <CardTitle className="text-foreground dark:text-foreground text-xl">
                 {loading ? 'Loading Pickup Requests...' : 'Live Pickup Requests'}
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" className="ml-3 animate-pulse">
+                    {unreadCount} new
+                  </Badge>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -718,7 +740,7 @@ const AdminDashboard = () => {
         {/* Footer */}
         <footer className="bg-card dark:bg-card border-t border-border dark:border-border p-4 text-center">
           <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-            Licensed Admin Area — Nature's Remedy © 2025 | Connected to Supabase
+            Licensed Admin Area — Nature's Remedy © 2025 | Connected to Supabase with Real-time Notifications
           </p>
         </footer>
       </div>
