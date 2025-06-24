@@ -25,7 +25,8 @@ import {
   Star,
   BarChart3,
   Filter,
-  Search
+  Search,
+  Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -33,6 +34,7 @@ import PickupRequestsTable from '@/components/PickupRequestsTable';
 import RequestDetailModal from '@/components/RequestDetailModal';
 import WhatsAppWidget from '@/components/WhatsAppWidget';
 import NotificationDropdown from '@/components/NotificationDropdown';
+import { supabase, SupabasePickupRequest } from '@/lib/supabase';
 
 interface PickupRequest {
   id: string;
@@ -40,7 +42,7 @@ interface PickupRequest {
   whatsappNumber: string;
   items: string[];
   pickupTime: string;
-  status: 'new' | 'seen' | 'ready';
+  status: 'new' | 'seen' | 'ready' | 'completed';
   createdAt: string;
   totalAmount: number;
   isGoogleSynced?: boolean;
@@ -51,6 +53,7 @@ const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<PickupRequest | null>(null);
   const [pickupRequests, setPickupRequests] = useState<PickupRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isMuted, setIsMuted] = useState(false);
@@ -68,7 +71,6 @@ const AdminDashboard = () => {
       setIsDarkMode(savedTheme === 'dark');
     }
     
-    // Apply theme to document
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -100,96 +102,111 @@ const AdminDashboard = () => {
     };
   }, []);
 
-  // Default/Mock data - replace with Supabase data
-  useEffect(() => {
-    const defaultRequests: PickupRequest[] = [
-      {
-        id: '1',
-        customerName: 'John Doe',
-        whatsappNumber: '+254700123456',
-        items: ['Blue Dream (1g)', 'RAW Papers (2 packs)'],
-        pickupTime: 'morning',
-        status: 'new',
-        createdAt: '2025-01-21T10:30:00Z',
-        totalAmount: 1900
-      },
-      {
-        id: '2',
-        customerName: 'Jane M.',
-        whatsappNumber: '+254701234567',
-        items: ['Girl Scout Cookies (2g)', 'Grinder (1pc)'],
-        pickupTime: 'afternoon',
-        status: 'seen',
-        createdAt: '2025-01-21T08:15:00Z',
-        totalAmount: 3200
-      },
-      {
-        id: '3',
-        customerName: 'Mike Johnson',
-        whatsappNumber: '+254702345678',
-        items: ['OG Kush (1g)', 'Lighter'],
-        pickupTime: 'evening',
-        status: 'ready',
-        createdAt: '2025-01-20T16:45:00Z',
-        totalAmount: 1600
-      },
-      {
-        id: '4',
-        customerName: 'Sarah W.',
-        whatsappNumber: '+254703456789',
-        items: ['Granddaddy Purple (1g)', 'Papers (1 pack)'],
-        pickupTime: 'anytime',
-        status: 'new',
-        createdAt: '2025-01-21T12:20:00Z',
-        totalAmount: 1500
+  // Convert Supabase data to internal format
+  const convertSupabaseToInternal = (supabaseRequest: SupabasePickupRequest): PickupRequest => {
+    return {
+      id: supabaseRequest.id.toString(),
+      customerName: supababRequest.customer_name,
+      whatsappNumber: supabaseRequest.whatsapp_number || '+254700000000',
+      items: [supabaseRequest.strain + ` (${supabaseRequest.quantity}g)`],
+      pickupTime: supabaseRequest.pickup_time || 'anytime',
+      status: (supabaseRequest.status as 'new' | 'seen' | 'ready' | 'completed') || 'new',
+      createdAt: supabaseRequest.created_at,
+      totalAmount: supabaseRequest.total_amount || supabaseRequest.quantity * 1000
+    };
+  };
+
+  // Load pickup requests from Supabase
+  const loadPickupRequests = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('pickup_requests')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching pickup requests:', error);
+        toast.error('Failed to load pickup requests');
+        return;
       }
-    ];
-    setPickupRequests(defaultRequests);
-  }, []);
 
-  // Simulate real-time updates with enhanced notifications
+      if (data) {
+        const formattedRequests = data.map(convertSupabaseToInternal);
+        setPickupRequests(formattedRequests);
+      }
+    } catch (error) {
+      console.error('Error loading pickup requests:', error);
+      toast.error('Failed to load pickup requests');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Set up real-time subscription
   useEffect(() => {
-    const interval = setInterval(() => {
-      const shouldAddNew = Math.random() < 0.1;
-      
-      if (shouldAddNew) {
-        const customerName = `Customer ${Math.floor(Math.random() * 100)}`;
-        const newRequest: PickupRequest = {
-          id: `new-${Date.now()}`,
-          customerName,
-          whatsappNumber: `+2547${Math.floor(Math.random() * 100000000)}`,
-          items: ['New Strain (1g)', 'Papers'],
-          pickupTime: 'anytime',
-          status: 'new',
-          createdAt: new Date().toISOString(),
-          totalAmount: 1800
-        };
+    loadPickupRequests();
 
-        setPickupRequests(prev => [newRequest, ...prev]);
-        
-        // Play notification sound
-        if (!isMuted && audioRef.current) {
-          audioRef.current.play().catch(e => console.log('Audio play failed:', e));
+    // Set up real-time subscription for new requests
+    const channel = supabase
+      .channel('realtime:pickup_requests')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'pickup_requests' },
+        (payload) => {
+          console.log('🔄 New pickup request:', payload.new);
+          const newRequest = convertSupabaseToInternal(payload.new as SupabasePickupRequest);
+          
+          setPickupRequests(prev => [newRequest, ...prev]);
+          
+          // Play notification sound
+          if (!isMuted && audioRef.current) {
+            audioRef.current.play().catch(e => console.log('Audio play failed:', e));
+          }
+          
+          toast.success(`📦 New pickup request from ${newRequest.customerName}`, {
+            description: "Click to view details",
+            action: {
+              label: "View",
+              onClick: () => setSelectedRequest(newRequest),
+            },
+          });
         }
-        
-        // Enhanced toast notification
-        toast.success(`📦 New pickup request received from ${customerName}`, {
-          description: "Click to view details",
-          action: {
-            label: "View",
-            onClick: () => setSelectedRequest(newRequest),
-          },
-        });
-      }
-    }, 30000);
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'pickup_requests' },
+        (payload) => {
+          console.log('🔄 Updated pickup request:', payload.new);
+          const updatedRequest = convertSupabaseToInternal(payload.new as SupabasePickupRequest);
+          
+          setPickupRequests(prev => 
+            prev.map(req => req.id === updatedRequest.id ? updatedRequest : req)
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'pickup_requests' },
+        (payload) => {
+          console.log('🗑️ Deleted pickup request:', payload.old);
+          const deletedId = payload.old.id.toString();
+          
+          setPickupRequests(prev => prev.filter(req => req.id !== deletedId));
+          toast.info('Pickup request deleted');
+        }
+      )
+      .subscribe();
 
-    return () => clearInterval(interval);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [isMuted]);
 
   // Welcome message on component mount
   useEffect(() => {
     toast.success('Welcome back, CHIZOH 👑', {
-      description: 'Ready to manage your dispensary',
+      description: 'Connected to live Supabase data',
       duration: 4000,
     });
   }, []);
@@ -201,7 +218,6 @@ const AdminDashboard = () => {
       navigate('/admin/login');
     }
     
-    // Mock role assignment - replace with actual Supabase role fetch
     const savedRole = localStorage.getItem('user_role') as 'admin' | 'assistant' | 'viewer';
     if (savedRole) {
       setUserRole(savedRole);
@@ -215,27 +231,83 @@ const AdminDashboard = () => {
     navigate('/admin/login');
   };
 
-  const updateRequestStatus = (id: string, status: 'seen' | 'ready') => {
+  const updateRequestStatus = async (id: string, status: 'seen' | 'ready' | 'completed') => {
     if (userRole === 'viewer') {
       toast.error('You do not have permission to edit requests');
       return;
     }
     
-    setPickupRequests(prev => 
-      prev.map(req => 
-        req.id === id ? { ...req, status } : req
-      )
-    );
-    toast.success(`Request marked as ${status}`);
+    try {
+      const { error } = await supabase
+        .from('pickup_requests')
+        .update({ status })
+        .eq('id', parseInt(id));
+
+      if (error) {
+        console.error('Error updating status:', error);
+        toast.error('Failed to update request status');
+        return;
+      }
+
+      toast.success(`Request marked as ${status}`);
+    } catch (error) {
+      console.error('Error updating request status:', error);
+      toast.error('Failed to update request status');
+    }
   };
 
-  const markAllRequestsAsSeen = () => {
-    setPickupRequests(prev => 
-      prev.map(req => 
-        req.status === 'new' ? { ...req, status: 'seen' } : req
-      )
-    );
-    toast.success('All requests marked as seen');
+  const deleteRequest = async (id: string) => {
+    if (userRole === 'viewer') {
+      toast.error('You do not have permission to delete requests');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('pickup_requests')
+        .delete()
+        .eq('id', parseInt(id));
+
+      if (error) {
+        console.error('Error deleting request:', error);
+        toast.error('Failed to delete request');
+        return;
+      }
+
+      toast.success('Request deleted successfully');
+    } catch (error) {
+      console.error('Error deleting request:', error);
+      toast.error('Failed to delete request');
+    }
+  };
+
+  const markAllRequestsAsSeen = async () => {
+    try {
+      const newRequestIds = pickupRequests
+        .filter(req => req.status === 'new')
+        .map(req => parseInt(req.id));
+
+      if (newRequestIds.length === 0) {
+        toast.info('No new requests to mark as seen');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('pickup_requests')
+        .update({ status: 'seen' })
+        .in('id', newRequestIds);
+
+      if (error) {
+        console.error('Error marking all as seen:', error);
+        toast.error('Failed to mark all requests as seen');
+        return;
+      }
+
+      toast.success('All requests marked as seen');
+    } catch (error) {
+      console.error('Error marking all as seen:', error);
+      toast.error('Failed to mark all requests as seen');
+    }
   };
 
   const handleNotificationRequestClick = (id: string) => {
@@ -251,7 +323,6 @@ const AdminDashboard = () => {
   };
 
   const handleGoogleAuth = () => {
-    // Mock Google OAuth flow
     toast.success('Connected to Google Calendar successfully!');
     setIsGoogleConnected(true);
   };
@@ -268,7 +339,6 @@ const AdminDashboard = () => {
       return;
     }
 
-    // Mock sync to Google Calendar
     const updatedRequests = pickupRequests.map(req => 
       req.id === request.id 
         ? { ...req, isGoogleSynced: true, lastSynced: new Date().toISOString() }
@@ -285,12 +355,15 @@ const AdminDashboard = () => {
     return matchesStatus && matchesSearch;
   });
 
+  // Calculate stats from real data
   const newRequestsCount = pickupRequests.filter(req => req.status === 'new').length;
   const thisWeekPickups = pickupRequests.length;
   const pendingCount = pickupRequests.filter(req => req.status === 'new').length;
   const confirmedCount = pickupRequests.filter(req => req.status === 'seen').length;
-  const completedCount = pickupRequests.filter(req => req.status === 'ready').length;
+  const completedCount = pickupRequests.filter(req => req.status === 'ready' || req.status === 'completed').length;
+  const totalValue = pickupRequests.reduce((sum, req) => sum + req.totalAmount, 0);
 
+  // Sidebar items
   const sidebarItems = [
     { 
       name: 'Dashboard', 
@@ -471,7 +544,7 @@ const AdminDashboard = () => {
                   Welcome Chizoh 👑
                 </h1>
                 <p className="text-sm text-muted-foreground hidden sm:block">
-                  Ready to manage your dispensary
+                  {loading ? 'Loading live data...' : 'Connected to live Supabase data'}
                 </p>
               </div>
             </div>
@@ -515,7 +588,7 @@ const AdminDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="md:col-span-2">
                   <h2 className="text-2xl font-bold text-foreground mb-2">
-                    This Week: {thisWeekPickups} Pickups
+                    {loading ? 'Loading...' : `Live Data: ${thisWeekPickups} Pickups`}
                   </h2>
                   <div className="flex flex-wrap gap-2">
                     <Badge className="bg-red-500 text-white">Pending: {pendingCount}</Badge>
@@ -534,6 +607,7 @@ const AdminDashboard = () => {
                       <option value="new">New</option>
                       <option value="seen">Seen</option>
                       <option value="ready">Ready</option>
+                      <option value="completed">Completed</option>
                     </select>
                   </div>
                   <div className="relative">
@@ -601,7 +675,7 @@ const AdminDashboard = () => {
                   <div>
                     <p className="text-muted-foreground dark:text-muted-foreground text-sm">Total Value</p>
                     <p className="text-3xl font-bold text-foreground dark:text-foreground">
-                      KSh {pickupRequests.reduce((sum, req) => sum + req.totalAmount, 0).toLocaleString()}
+                      KSh {totalValue.toLocaleString()}
                     </p>
                   </div>
                   <div className="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center">
@@ -615,15 +689,27 @@ const AdminDashboard = () => {
           {/* Pickup Requests Table */}
           <Card className="bg-card dark:bg-card border-border dark:border-border">
             <CardHeader>
-              <CardTitle className="text-foreground dark:text-foreground text-xl">Recent Pickup Requests</CardTitle>
+              <CardTitle className="text-foreground dark:text-foreground text-xl">
+                {loading ? 'Loading Pickup Requests...' : 'Live Pickup Requests'}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <PickupRequestsTable
-                requests={filteredRequests}
-                onRequestClick={setSelectedRequest}
-                onUpdateStatus={updateRequestStatus}
-                userRole={userRole}
-              />
+              {loading ? (
+                <div className="text-center py-12">
+                  <Package className="mx-auto h-12 w-12 text-muted-foreground dark:text-muted-foreground mb-4 animate-pulse" />
+                  <h3 className="text-lg font-medium text-foreground dark:text-foreground mb-2">
+                    Loading live data from Supabase...
+                  </h3>
+                </div>
+              ) : (
+                <PickupRequestsTable
+                  requests={filteredRequests}
+                  onRequestClick={setSelectedRequest}
+                  onUpdateStatus={updateRequestStatus}
+                  onDeleteRequest={deleteRequest}
+                  userRole={userRole}
+                />
+              )}
             </CardContent>
           </Card>
         </main>
@@ -631,7 +717,7 @@ const AdminDashboard = () => {
         {/* Footer */}
         <footer className="bg-card dark:bg-card border-t border-border dark:border-border p-4 text-center">
           <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-            Licensed Admin Area — Nature's Remedy © 2025
+            Licensed Admin Area — Nature's Remedy © 2025 | Connected to Supabase
           </p>
         </footer>
       </div>

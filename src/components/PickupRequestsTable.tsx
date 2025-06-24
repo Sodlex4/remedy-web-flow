@@ -15,7 +15,8 @@ import {
   Phone, 
   Package, 
   Clock,
-  CheckCircle
+  CheckCircle,
+  Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -25,7 +26,7 @@ interface PickupRequest {
   whatsappNumber: string;
   items: string[];
   pickupTime: string;
-  status: 'new' | 'seen' | 'ready';
+  status: 'new' | 'seen' | 'ready' | 'completed';
   createdAt: string;
   totalAmount: number;
 }
@@ -33,7 +34,8 @@ interface PickupRequest {
 interface PickupRequestsTableProps {
   requests: PickupRequest[];
   onRequestClick: (request: PickupRequest) => void;
-  onUpdateStatus: (id: string, status: 'seen' | 'ready') => void;
+  onUpdateStatus: (id: string, status: 'seen' | 'ready' | 'completed') => void;
+  onDeleteRequest?: (id: string) => void;
   userRole: 'admin' | 'assistant' | 'viewer';
 }
 
@@ -41,13 +43,15 @@ const PickupRequestsTable = ({
   requests, 
   onRequestClick, 
   onUpdateStatus,
+  onDeleteRequest,
   userRole 
 }: PickupRequestsTableProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'new': return 'bg-red-500 hover:bg-red-600';
       case 'seen': return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'ready': return 'bg-green-500 hover:bg-green-600';
+      case 'ready': return 'bg-blue-500 hover:bg-blue-600';
+      case 'completed': return 'bg-green-500 hover:bg-green-600';
       default: return 'bg-gray-500';
     }
   };
@@ -56,22 +60,29 @@ const PickupRequestsTable = ({
     switch (status) {
       case 'new': return Clock;
       case 'seen': return Eye;
-      case 'ready': return CheckCircle;
+      case 'ready': return Package;
+      case 'completed': return CheckCircle;
       default: return Clock;
     }
   };
 
   const canEdit = userRole === 'admin' || userRole === 'assistant';
 
+  const handleDelete = (id: string, customerName: string) => {
+    if (window.confirm(`Are you sure you want to delete the request from ${customerName}?`)) {
+      onDeleteRequest?.(id);
+    }
+  };
+
   if (requests.length === 0) {
     return (
       <div className="text-center py-12">
         <Package className="mx-auto h-12 w-12 text-muted-foreground dark:text-muted-foreground mb-4" />
         <h3 className="text-lg font-medium text-foreground dark:text-foreground mb-2">
-          No pickup requests yet
+          No pickup requests found
         </h3>
         <p className="text-muted-foreground dark:text-muted-foreground">
-          Pickup requests will appear here when customers submit them.
+          New pickup requests from Supabase will appear here in real-time.
         </p>
       </div>
     );
@@ -164,9 +175,19 @@ const PickupRequestsTable = ({
                           variant="outline"
                           size="sm"
                           onClick={() => onUpdateStatus(request.id, 'ready')}
-                          className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
+                          className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
                         >
                           Mark Ready
+                        </Button>
+                      )}
+                      {canEdit && request.status === 'ready' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onUpdateStatus(request.id, 'completed')}
+                          className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
+                        >
+                          Complete
                         </Button>
                       )}
                       <Button
@@ -176,6 +197,16 @@ const PickupRequestsTable = ({
                       >
                         <Eye size={16} />
                       </Button>
+                      {canEdit && onDeleteRequest && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(request.id, request.customerName)}
+                          className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -248,9 +279,29 @@ const PickupRequestsTable = ({
                       variant="outline"
                       size="sm"
                       onClick={() => onUpdateStatus(request.id, 'ready')}
-                      className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
+                      className="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white"
                     >
                       Mark Ready
+                    </Button>
+                  )}
+                  {request.status === 'ready' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onUpdateStatus(request.id, 'completed')}
+                      className="border-green-500 text-green-500 hover:bg-green-500 hover:text-white"
+                    >
+                      Complete
+                    </Button>
+                  )}
+                  {onDeleteRequest && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDelete(request.id, request.customerName)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 size={16} />
                     </Button>
                   )}
                 </div>
