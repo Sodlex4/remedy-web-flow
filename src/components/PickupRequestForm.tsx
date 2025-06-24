@@ -1,0 +1,166 @@
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+
+const strains = [
+  'Blue Dream',
+  'Girl Scout Cookies', 
+  'OG Kush',
+  'White Widow',
+  'Purple Haze',
+  'Sour Diesel',
+  'Northern Lights',
+  'Green Crack'
+];
+
+const PickupRequestForm = () => {
+  const [formData, setFormData] = useState({
+    customerName: '',
+    whatsappNumber: '',
+    strain: '',
+    quantity: 1,
+    pickupTime: 'anytime'
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.customerName || !formData.whatsappNumber || !formData.strain) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('pickup_requests')
+        .insert([
+          {
+            customer_name: formData.customerName,
+            whatsapp_number: formData.whatsappNumber,
+            strain: formData.strain,
+            quantity: formData.quantity,
+            pickup_time: formData.pickupTime,
+            status: 'new',
+            total_amount: formData.quantity * 1600
+          }
+        ]);
+
+      if (error) {
+        console.error('Error submitting request:', error);
+        toast.error('Failed to submit request. Please try again.');
+        return;
+      }
+
+      toast.success('Request Submitted Successfully ✅', {
+        description: `Your pickup request for ${formData.strain} has been submitted.`
+      });
+
+      // Reset form
+      setFormData({
+        customerName: '',
+        whatsappNumber: '',
+        strain: '',
+        quantity: 1,
+        pickupTime: 'anytime'
+      });
+
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to submit request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Request Pickup</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="customerName">Name *</Label>
+            <Input
+              id="customerName"
+              type="text"
+              value={formData.customerName}
+              onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+              placeholder="Your full name"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="whatsappNumber">Phone Number *</Label>
+            <Input
+              id="whatsappNumber"
+              type="tel"
+              value={formData.whatsappNumber}
+              onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+              placeholder="+254700123456"
+              required
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="strain">Strain *</Label>
+            <Select onValueChange={(value) => setFormData({ ...formData, strain: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a strain" />
+              </SelectTrigger>
+              <SelectContent>
+                {strains.map(strain => (
+                  <SelectItem key={strain} value={strain}>
+                    {strain}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="quantity">Quantity (grams)</Label>
+            <Input
+              id="quantity"
+              type="number"
+              min="1"
+              value={formData.quantity}
+              onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="pickupTime">Preferred Pickup Time</Label>
+            <Select onValueChange={(value) => setFormData({ ...formData, pickupTime: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select pickup time" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="morning">Morning (9AM - 12PM)</SelectItem>
+                <SelectItem value="afternoon">Afternoon (12PM - 4PM)</SelectItem>
+                <SelectItem value="evening">Evening (4PM - 8PM)</SelectItem>
+                <SelectItem value="anytime">Any time convenient</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit Request'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default PickupRequestForm;

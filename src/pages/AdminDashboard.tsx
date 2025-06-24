@@ -33,7 +33,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import PickupRequestsTable from '@/components/PickupRequestsTable';
 import RequestDetailModal from '@/components/RequestDetailModal';
-import WhatsAppWidget from '@/components/WhatsAppWidget';
 import NotificationDropdown from '@/components/NotificationDropdown';
 import { supabase, SupabasePickupRequest } from '@/lib/supabase';
 import { PickupRequest } from '@/types/pickupRequest';
@@ -730,9 +729,6 @@ const AdminDashboard = () => {
           </p>
         </footer>
       </div>
-
-      {/* WhatsApp Widget */}
-      <WhatsAppWidget />
 
       {/* Request Detail Modal with Google Calendar Sync */}
       {selectedRequest && (
