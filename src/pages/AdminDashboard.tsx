@@ -36,6 +36,7 @@ import WhatsAppWidget from '@/components/WhatsAppWidget';
 import NotificationDropdown from '@/components/NotificationDropdown';
 import { supabase, SupabasePickupRequest } from '@/lib/supabase';
 
+// Use a consistent interface that matches the table component
 interface PickupRequest {
   id: string;
   customerName: string;
@@ -106,7 +107,7 @@ const AdminDashboard = () => {
   const convertSupabaseToInternal = (supabaseRequest: SupabasePickupRequest): PickupRequest => {
     return {
       id: supabaseRequest.id.toString(),
-      customerName: supababRequest.customer_name,
+      customerName: supabaseRequest.customer_name,
       whatsappNumber: supabaseRequest.whatsapp_number || '+254700000000',
       items: [supabaseRequest.strain + ` (${supabaseRequest.quantity}g)`],
       pickupTime: supabaseRequest.pickup_time || 'anytime',
