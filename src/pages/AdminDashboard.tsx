@@ -1,40 +1,16 @@
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { 
-  Menu, 
-  X, 
-  Leaf, 
-  FileText, 
-  Settings, 
-  LogOut, 
-  User,
-  Clock,
-  Phone,
-  Eye,
-  CheckCircle,
-  Package,
-  VolumeX,
-  Volume2,
-  Moon,
-  Sun,
-  Calendar as CalendarIcon,
-  MessageCircle,
-  Star,
-  BarChart3,
-  Filter,
-  Search,
-  Trash2,
-  Bell
-} from 'lucide-react';
+import { Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import PickupRequestsTable from '@/components/PickupRequestsTable';
 import RequestDetailModal from '@/components/RequestDetailModal';
-import NotificationDropdown from '@/components/NotificationDropdown';
+import AdminHeader from '@/components/admin/AdminHeader';
+import AdminSidebar from '@/components/admin/AdminSidebar';
+import StatsCards from '@/components/admin/StatsCards';
+import PickupOverview from '@/components/admin/PickupOverview';
 import { supabase, SupabasePickupRequest } from '@/lib/supabase';
 import { PickupRequest } from '@/types/pickupRequest';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
@@ -348,57 +324,6 @@ const AdminDashboard = () => {
   const completedCount = pickupRequests.filter(req => req.status === 'ready' || req.status === 'completed').length;
   const totalValue = pickupRequests.reduce((sum, req) => sum + req.totalAmount, 0);
 
-  // Sidebar items
-  const sidebarItems = [
-    { 
-      name: 'Dashboard', 
-      icon: BarChart3, 
-      active: true,
-      badge: newRequestsCount > 0 ? newRequestsCount : undefined,
-      path: '/admin/dashboard'
-    },
-    { 
-      name: 'Calendar', 
-      icon: CalendarIcon, 
-      active: false,
-      path: '/admin/calendar'
-    },
-    { 
-      name: 'Pickup Requests', 
-      icon: FileText, 
-      active: false,
-      badge: newRequestsCount > 0 ? newRequestsCount : undefined,
-      path: '/admin/dashboard'
-    },
-    { 
-      name: 'Messages', 
-      icon: MessageCircle, 
-      active: false,
-      path: '/admin/messages'
-    },
-    { 
-      name: 'Ratings', 
-      icon: Star, 
-      active: false,
-      path: '/admin/ratings'
-    },
-    { 
-      name: 'Settings', 
-      icon: Settings, 
-      active: false,
-      path: '/admin/settings'
-    }
-  ];
-
-  const getRoleColor = () => {
-    switch (userRole) {
-      case 'admin': return 'bg-green-500';
-      case 'assistant': return 'bg-blue-500';
-      case 'viewer': return 'bg-gray-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background dark:bg-background flex transition-colors duration-300">
       {/* Mobile Overlay */}
@@ -410,285 +335,58 @@ const AdminDashboard = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-72 bg-card dark:bg-card border-r border-border dark:border-border transition-transform duration-300 ease-in-out`}>
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center justify-between p-6 border-b border-border dark:border-border">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-2xl flex items-center justify-center">
-                <Leaf className="text-primary-foreground" size={20} />
-              </div>
-              <div>
-                <span className="font-bold text-foreground dark:text-foreground text-lg">Nature's Remedy</span>
-                <p className="text-xs text-muted-foreground">Admin Panel</p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <X size={20} />
-            </Button>
-          </div>
-
-          {/* User Role Badge */}
-          <div className="px-6 py-4">
-            <div className={`inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-white ${getRoleColor()}`}>
-              <User size={14} className="mr-2" />
-              {userRole.toUpperCase()} ACCESS
-            </div>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 px-4">
-            <div className="space-y-2">
-              {sidebarItems.map((item) => (
-                <Button
-                  key={item.name}
-                  variant={item.active ? "secondary" : "ghost"}
-                  className="w-full justify-start text-left h-12 rounded-xl"
-                  onClick={() => {
-                    if (item.path) navigate(item.path);
-                    setIsSidebarOpen(false);
-                  }}
-                >
-                  <item.icon className="mr-3" size={20} />
-                  <span className="flex-1">{item.name}</span>
-                  {item.badge && (
-                    <Badge variant="destructive" className="ml-2 rounded-full">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </Button>
-              ))}
-            </div>
-          </nav>
-
-          {/* Google Calendar Integration */}
-          <div className="p-4 border-t border-border dark:border-border">
-            {!isGoogleConnected ? (
-              <Button
-                onClick={handleGoogleAuth}
-                className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-12"
-              >
-                <CalendarIcon className="mr-2" size={16} />
-                Connect Google Calendar
-              </Button>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">Auto-Sync</span>
-                  <Switch
-                    checked={autoSyncEnabled}
-                    onCheckedChange={setAutoSyncEnabled}
-                  />
-                </div>
-                <Button
-                  onClick={disconnectGoogle}
-                  variant="outline"
-                  className="w-full rounded-xl"
-                >
-                  Disconnect Calendar
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Logout */}
-          <div className="p-4 border-t border-border dark:border-border">
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-destructive hover:text-destructive rounded-xl h-12"
-              onClick={handleLogout}
-            >
-              <LogOut className="mr-3" size={20} />
-              Logout
-            </Button>
-          </div>
-        </div>
-      </div>
+      <AdminSidebar
+        isSidebarOpen={isSidebarOpen}
+        setIsSidebarOpen={setIsSidebarOpen}
+        userRole={userRole}
+        newRequestsCount={newRequestsCount}
+        isGoogleConnected={isGoogleConnected}
+        autoSyncEnabled={autoSyncEnabled}
+        setAutoSyncEnabled={setAutoSyncEnabled}
+        onGoogleAuth={handleGoogleAuth}
+        onDisconnectGoogle={disconnectGoogle}
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Sticky Topbar */}
-        <header className="sticky top-0 z-30 bg-card/95 dark:bg-card/95 backdrop-blur-sm border-b border-border dark:border-border">
-          <div className="flex items-center justify-between p-4 lg:p-6">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden rounded-xl"
-                onClick={() => setIsSidebarOpen(true)}
-              >
-                <Menu size={20} />
-              </Button>
-              <div>
-                <h1 className="text-xl lg:text-2xl font-bold text-foreground dark:text-foreground">
-                  Welcome Chizoh 👑
-                </h1>
-                <p className="text-sm text-muted-foreground hidden sm:block">
-                  {loading ? 'Loading live data...' : 'Connected to live Supabase data with real-time notifications'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              {/* Theme Toggle */}
-              <div className="hidden sm:flex items-center space-x-2">
-                <Sun size={16} className="text-muted-foreground" />
-                <Switch
-                  checked={isDarkMode}
-                  onCheckedChange={toggleTheme}
-                  className="data-[state=checked]:bg-primary"
-                />
-                <Moon size={16} className="text-muted-foreground" />
-              </div>
-              
-              {/* Notification Bell */}
-              <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-muted-foreground hover:text-foreground rounded-xl"
-                >
-                  <Bell size={16} />
-                  {unreadCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center animate-pulse"
-                    >
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </Badge>
-                  )}
-                </Button>
-              </div>
-              
-              {/* Notification Dropdown */}
-              <NotificationDropdown
-                requests={pickupRequests}
-                onMarkAllSeen={markAllRequestsAsSeen}
-                onRequestClick={handleNotificationRequestClick}
-              />
-              
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleMute}
-                className="text-muted-foreground hover:text-foreground rounded-xl"
-              >
-                {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </Button>
-            </div>
-          </div>
-        </header>
+        {/* Header */}
+        <AdminHeader
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+          isDarkMode={isDarkMode}
+          toggleTheme={toggleTheme}
+          isMuted={isMuted}
+          toggleMute={toggleMute}
+          unreadCount={unreadCount}
+          loading={loading}
+          pickupRequests={pickupRequests}
+          onMarkAllSeen={markAllRequestsAsSeen}
+          onNotificationClick={handleNotificationRequestClick}
+        />
 
         {/* Dashboard Content */}
         <main className="flex-1 p-4 lg:p-6 space-y-6">
           {/* Pickup Overview Section */}
-          <Card className="bg-gradient-to-r from-primary/10 to-green-600/10 border-primary/20">
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-2">
-                  <h2 className="text-2xl font-bold text-foreground mb-2">
-                    {loading ? 'Loading...' : `Live Data: ${thisWeekPickups} Pickups`}
-                  </h2>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge className="bg-red-500 text-white">Pending: {pendingCount}</Badge>
-                    <Badge className="bg-yellow-500 text-white">Confirmed: {confirmedCount}</Badge>
-                    <Badge className="bg-green-500 text-white">Completed: {completedCount}</Badge>
-                  </div>
-                </div>
-                <div className="md:col-span-2 space-y-3">
-                  <div className="flex gap-2">
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                      className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm"
-                    >
-                      <option value="all">All Status</option>
-                      <option value="new">New</option>
-                      <option value="seen">Seen</option>
-                      <option value="ready">Ready</option>
-                      <option value="completed">Completed</option>
-                    </select>
-                  </div>
-                  <div className="relative">
-                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="text"
-                      placeholder="Search customers..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2 text-sm"
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PickupOverview
+            loading={loading}
+            thisWeekPickups={thisWeekPickups}
+            pendingCount={pendingCount}
+            confirmedCount={confirmedCount}
+            completedCount={completedCount}
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+          />
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-card dark:bg-card border-border dark:border-border hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-muted-foreground dark:text-muted-foreground text-sm">New Requests</p>
-                    <p className="text-3xl font-bold text-foreground dark:text-foreground">{newRequestsCount}</p>
-                  </div>
-                  <div className="w-14 h-14 bg-red-500/20 rounded-2xl flex items-center justify-center">
-                    <Clock className="text-red-500" size={24} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card dark:bg-card border-border dark:border-border hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-muted-foreground dark:text-muted-foreground text-sm">Total Requests</p>
-                    <p className="text-3xl font-bold text-foreground dark:text-foreground">{pickupRequests.length}</p>
-                  </div>
-                  <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center">
-                    <FileText className="text-primary" size={24} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card dark:bg-card border-border dark:border-border hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-muted-foreground dark:text-muted-foreground text-sm">Ready for Pickup</p>
-                    <p className="text-3xl font-bold text-foreground dark:text-foreground">{completedCount}</p>
-                  </div>
-                  <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center">
-                    <CheckCircle className="text-green-500" size={24} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card dark:bg-card border-border dark:border-border hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-muted-foreground dark:text-muted-foreground text-sm">Total Value</p>
-                    <p className="text-3xl font-bold text-foreground dark:text-foreground">
-                      KSh {totalValue.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center">
-                    <Package className="text-yellow-500" size={24} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <StatsCards
+            newRequestsCount={newRequestsCount}
+            totalRequests={pickupRequests.length}
+            completedCount={completedCount}
+            totalValue={totalValue}
+          />
 
           {/* Pickup Requests Table */}
           <Card className="bg-card dark:bg-card border-border dark:border-border">
