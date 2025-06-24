@@ -40,20 +40,6 @@ import { PickupRequest } from '@/types/pickupRequest';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 
-// Use a consistent interface that matches the table component
-interface PickupRequest {
-  id: string;
-  customerName: string;
-  whatsappNumber: string;
-  items: string[];
-  pickupTime: string;
-  status: 'new' | 'seen' | 'ready' | 'completed';
-  createdAt: string;
-  totalAmount: number;
-  isGoogleSynced?: boolean;
-  lastSynced?: string;
-}
-
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<PickupRequest | null>(null);

@@ -4,14 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Bell, X } from 'lucide-react';
 import { format } from 'date-fns';
-
-interface PickupRequest {
-  id: string;
-  customerName: string;
-  whatsappNumber: string;
-  createdAt: string;
-  status: 'new' | 'seen' | 'ready';
-}
+import { PickupRequest } from '@/types/pickupRequest';
 
 interface NotificationDropdownProps {
   requests: PickupRequest[];
