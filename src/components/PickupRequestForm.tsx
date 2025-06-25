@@ -44,8 +44,8 @@ const PickupRequestForm = () => {
         .from('pickup_requests')
         .insert([
           {
-            customer_name: formData.customerName,
-            whatsapp_number: formData.whatsappNumber,
+            name: formData.customerName,
+            phone: formData.whatsappNumber,
             strain: formData.strain,
             quantity: formData.quantity,
             pickup_time: formData.pickupTime,

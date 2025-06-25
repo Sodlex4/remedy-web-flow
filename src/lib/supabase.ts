@@ -6,14 +6,15 @@ const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+// Updated interface to match actual database schema
 export interface SupabasePickupRequest {
   id: number;
-  customer_name: string;
+  name: string;
+  phone: string;
   strain: string;
   quantity: number;
+  pickup_time: string;
+  status: 'new' | 'seen' | 'ready' | 'completed';
   created_at: string;
-  status?: 'new' | 'seen' | 'ready' | 'completed';
-  whatsapp_number?: string;
-  pickup_time?: string;
-  total_amount?: number;
+  total_amount: number;
 }

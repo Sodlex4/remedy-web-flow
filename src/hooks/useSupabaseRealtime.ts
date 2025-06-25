@@ -23,13 +23,13 @@ export const useSupabaseRealtime = ({
   const convertSupabaseToInternal = useCallback((supabaseRequest: SupabasePickupRequest): PickupRequest => {
     return {
       id: supabaseRequest.id.toString(),
-      customerName: supabaseRequest.customer_name,
-      whatsappNumber: supabaseRequest.whatsapp_number || '+254700000000',
+      customerName: supabaseRequest.name,
+      whatsappNumber: supabaseRequest.phone,
       items: [supabaseRequest.strain + ` (${supabaseRequest.quantity}g)`],
-      pickupTime: supabaseRequest.pickup_time || 'anytime',
-      status: (supabaseRequest.status as 'new' | 'seen' | 'ready' | 'completed') || 'new',
+      pickupTime: supabaseRequest.pickup_time,
+      status: supabaseRequest.status,
       createdAt: supabaseRequest.created_at,
-      totalAmount: supabaseRequest.total_amount || supabaseRequest.quantity * 1000
+      totalAmount: supabaseRequest.total_amount
     };
   }, []);
 

@@ -20,3 +20,16 @@ export interface PickupRequestsTableProps {
   onDeleteRequest?: (id: string) => void;
   userRole: 'admin' | 'assistant' | 'viewer';
 }
+
+// Supabase database schema type
+export interface SupabasePickupRequest {
+  id: number;
+  name: string;
+  phone: string;
+  strain: string;
+  quantity: number;
+  pickup_time: string;
+  status: 'new' | 'seen' | 'ready' | 'completed';
+  created_at: string;
+  total_amount: number;
+}
