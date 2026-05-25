@@ -64,7 +64,7 @@ const HeroSection = () => {
           {/* Right Content - Simple Image */}
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
-              <div className="w-80 h-80 md:w-96 md:h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm">
+              <div className="w-80 h-80 md:w-96 md:h-96 max-w-full bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center overflow-hidden backdrop-blur-sm">
                 <div className="w-72 h-72 md:w-88 md:h-88 bg-card rounded-full flex items-center justify-center border border-primary/30 relative">
                   <div className="text-center text-primary relative z-10">
                     <div className="w-32 h-32 mx-auto mb-4 bg-primary/20 rounded-full flex items-center justify-center">

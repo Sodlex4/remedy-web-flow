@@ -153,10 +153,10 @@ const AdminRatings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background p-6">
+      <div className="min-h-screen bg-background dark:bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-start md:items-center justify-between flex-col md:flex-row gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Customer Ratings</h1>
             <p className="text-muted-foreground">Monitor customer feedback and satisfaction</p>

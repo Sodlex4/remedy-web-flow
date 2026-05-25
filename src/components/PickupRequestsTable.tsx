@@ -249,7 +249,7 @@ const PickupRequestsTable = ({
               </div>
               
               {canEdit && (
-                <div className="flex space-x-2 mt-3" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-wrap gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
                   {request.status === 'new' && (
                     <Button
                       variant="outline"

@@ -23,7 +23,11 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border z-40">
+    <>
+      {isMenuOpen && (
+        <div className="fixed inset-0 bg-black/50 z-30" onClick={() => setIsMenuOpen(false)} />
+      )}
+      <nav className="fixed top-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-b border-border z-40">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
@@ -92,6 +96,7 @@ const Navigation = () => {
         )}
       </div>
     </nav>
+    </>
   );
 };
 

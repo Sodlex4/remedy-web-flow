@@ -18,7 +18,8 @@ import {
   Search,
   Filter,
   Calendar as CalendarIcon,
-  Download
+  Download,
+  MessageCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -432,15 +433,15 @@ const PickupCalendar = () => {
                               </div>
                             </div>
                             
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-row flex-wrap gap-2">
                               {request.status !== 'completed' && (
                                 <Button
                                   onClick={() => markAsCompleted(request.id)}
                                   className="bg-green-500 hover:bg-green-600 text-white"
                                   size="sm"
                                 >
-                                  <CheckCircle size={16} className="mr-1" />
-                                  Mark Complete
+                                  <CheckCircle size={14} className="sm:mr-1" />
+                                  <span className="hidden sm:inline">Mark Complete</span>
                                 </Button>
                               )}
                               
@@ -449,8 +450,8 @@ const PickupCalendar = () => {
                                 size="sm"
                                 onClick={() => exportToCalendar(request)}
                               >
-                                <Download size={16} className="mr-1" />
-                                Export
+                                <Download size={14} className="sm:mr-1" />
+                                <span className="hidden sm:inline">Export</span>
                               </Button>
                               
                               <Button
@@ -458,7 +459,8 @@ const PickupCalendar = () => {
                                 size="sm"
                                 onClick={() => window.open(`https://wa.me/${request.whatsappNumber.replace('+', '')}`, '_blank')}
                               >
-                                Contact
+                                <MessageCircle size={14} className="sm:mr-1" />
+                                <span className="hidden sm:inline">Contact</span>
                               </Button>
                             </div>
                           </div>

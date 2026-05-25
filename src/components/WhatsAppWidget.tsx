@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageCircle, X, Leaf } from 'lucide-react';
@@ -7,6 +7,11 @@ import { strainNames } from '@/data/strains';
 
 const WhatsAppWidget = () => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isSearchPage, setIsSearchPage] = useState(false);
+
+  useEffect(() => {
+    setIsSearchPage(window.location.pathname === '/search');
+  }, []);
   const [selectedStrain, setSelectedStrain] = useState<string>('');
   const [showStrainSelector, setShowStrainSelector] = useState(false);
 
@@ -27,8 +32,10 @@ const WhatsAppWidget = () => {
     }
   };
 
+  if (isSearchPage) return null;
+
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+24px)] right-6 z-50">
       {/* Chat bubble hint */}
       {!isExpanded && (
         <div className="absolute bottom-16 right-0 bg-primary text-primary-foreground px-3 py-2 rounded-lg text-sm font-medium animate-bounce mb-2 shadow-lg">
@@ -39,7 +46,7 @@ const WhatsAppWidget = () => {
 
       {/* Expanded widget */}
       {isExpanded && (
-        <div className="mb-4 bg-card dark:bg-card border border-border dark:border-border rounded-lg p-4 shadow-lg max-w-sm animate-scale-in">
+        <div className="mb-4 bg-card dark:bg-card border border-border dark:border-border rounded-lg p-4 shadow-lg max-w-[calc(100vw-48px)] sm:max-w-sm animate-scale-in">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold text-foreground dark:text-foreground">Chat Your Favorite Strain 🌿</h3>
             <Button

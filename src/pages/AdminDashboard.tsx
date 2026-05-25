@@ -26,12 +26,12 @@ const AdminDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isMuted, setIsMuted] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [userRole, setUserRole] = useState<'admin' | 'assistant' | 'viewer'>('admin');
+  const { user, role, signOut } = useAuth();
+  const [userRole, setUserRole] = useState<'admin' | 'assistant' | 'viewer'>('viewer');
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
   
   const { playNotification, initializeAudio } = useNotificationSound();
 
@@ -172,6 +172,11 @@ const AdminDashboard = () => {
       duration: 4000,
     });
   }, []);
+
+  // Sync role from AuthContext
+  useEffect(() => {
+    setUserRole(role);
+  }, [role]);
 
   // Check authentication
   useEffect(() => {

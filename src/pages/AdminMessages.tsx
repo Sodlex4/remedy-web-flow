@@ -238,7 +238,7 @@ const AdminMessages = () => {
                       onChange={(e) => setReply(e.target.value)}
                       className="min-h-[100px]"
                     />
-                    <div className="flex space-x-3">
+                    <div className="flex flex-wrap gap-2">
                       {selectedMessage.whatsappNumber && (
                         <Button
                           onClick={() => handleWhatsAppReply(selectedMessage.whatsappNumber!)}

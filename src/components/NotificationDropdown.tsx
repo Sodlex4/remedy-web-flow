@@ -42,7 +42,7 @@ const NotificationDropdown = ({ requests, onMarkAllSeen, onRequestClick }: Notif
             className="fixed inset-0 z-40" 
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 top-12 w-80 bg-card dark:bg-card border border-border dark:border-border rounded-lg shadow-lg z-50 animate-scale-in">
+          <div className="absolute right-0 top-12 w-80 max-w-[90vw] bg-card dark:bg-card border border-border dark:border-border rounded-lg shadow-lg z-50 animate-scale-in">
             <div className="p-4 border-b border-border dark:border-border">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-foreground dark:text-foreground">

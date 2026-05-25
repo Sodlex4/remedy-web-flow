@@ -43,7 +43,7 @@ const RequestPickup = () => {
               variant="ghost"
               size="icon"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="relative z-10"
+              className="relative z-10 md:hidden"
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </Button>

@@ -132,7 +132,7 @@ const AdminSettings = () => {
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="flex overflow-x-auto gap-1 w-full">
             <TabsTrigger value="profile" className="flex items-center space-x-2">
               <User size={16} />
               <span>Profile</span>
