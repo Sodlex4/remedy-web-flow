@@ -7,17 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-
-const strains = [
-  'Blue Dream',
-  'Girl Scout Cookies', 
-  'OG Kush',
-  'White Widow',
-  'Purple Haze',
-  'Sour Diesel',
-  'Northern Lights',
-  'Green Crack'
-];
+import { strainNames, getStrainPrice } from '@/data/strains';
 
 const PickupRequestForm = () => {
   const [formData, setFormData] = useState({
@@ -50,7 +40,7 @@ const PickupRequestForm = () => {
             quantity: formData.quantity,
             pickup_time: formData.pickupTime,
             status: 'new',
-            total_amount: formData.quantity * 1600
+            total_amount: formData.quantity * getStrainPrice(formData.strain)
           }
         ]);
 
@@ -119,9 +109,9 @@ const PickupRequestForm = () => {
                 <SelectValue placeholder="Select a strain" />
               </SelectTrigger>
               <SelectContent>
-                {strains.map(strain => (
+                {strainNames.map(strain => (
                   <SelectItem key={strain} value={strain}>
-                    {strain}
+                    {strain} (KSh {getStrainPrice(strain)}/g)
                   </SelectItem>
                 ))}
               </SelectContent>

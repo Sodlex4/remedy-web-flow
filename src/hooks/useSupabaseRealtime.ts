@@ -1,7 +1,7 @@
 
 import { useEffect, useCallback } from 'react';
-import { supabase, SupabasePickupRequest } from '@/lib/supabase';
-import { PickupRequest } from '@/types/pickupRequest';
+import { supabase } from '@/lib/supabase';
+import { PickupRequest, SupabasePickupRequest } from '@/types/pickupRequest';
 import { toast } from 'sonner';
 
 interface UseSupabaseRealtimeProps {

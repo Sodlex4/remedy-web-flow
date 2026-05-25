@@ -11,10 +11,11 @@ import AdminHeader from '@/components/admin/AdminHeader';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import StatsCards from '@/components/admin/StatsCards';
 import PickupOverview from '@/components/admin/PickupOverview';
-import { supabase, SupabasePickupRequest } from '@/lib/supabase';
-import { PickupRequest } from '@/types/pickupRequest';
+import { supabase } from '@/lib/supabase';
+import { PickupRequest, SupabasePickupRequest } from '@/types/pickupRequest';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
+import { useAuth } from '@/context/AuthContext';
 
 const AdminDashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -30,6 +31,7 @@ const AdminDashboard = () => {
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   
   const { playNotification, initializeAudio } = useNotificationSound();
 
@@ -173,20 +175,13 @@ const AdminDashboard = () => {
 
   // Check authentication
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem('admin_logged_in');
-    if (!isLoggedIn) {
+    if (!user) {
       navigate('/admin/login');
     }
-    
-    const savedRole = localStorage.getItem('user_role') as 'admin' | 'assistant' | 'viewer';
-    if (savedRole) {
-      setUserRole(savedRole);
-    }
-  }, [navigate]);
+  }, [user, navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_logged_in');
-    localStorage.removeItem('user_role');
+  const handleLogout = async () => {
+    await signOut();
     toast.success('Logged out successfully');
     navigate('/admin/login');
   };

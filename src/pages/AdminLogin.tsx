@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Leaf, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({
@@ -16,22 +16,22 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock authentication - replace with actual Supabase auth
-    setTimeout(() => {
-      if (formData.email && formData.password) {
-        localStorage.setItem('admin_logged_in', 'true');
-        toast.success('Welcome back, Admin!');
-        navigate('/admin/dashboard');
-      } else {
-        toast.error('Please enter valid credentials');
-      }
+    const error = await signIn(formData.email, formData.password);
+
+    if (error) {
+      toast.error(error === 'Invalid login credentials' ? 'Invalid email or password' : error);
       setIsLoading(false);
-    }, 1000);
+      return;
+    }
+
+    toast.success('Welcome back!');
+    navigate('/admin/dashboard');
   };
 
   return (

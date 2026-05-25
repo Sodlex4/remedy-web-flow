@@ -3,17 +3,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageCircle, X, Leaf } from 'lucide-react';
-
-const strains = [
-  'Blue Dream',
-  'Girl Scout Cookies', 
-  'OG Kush',
-  'White Widow',
-  'Purple Haze',
-  'Sour Diesel',
-  'Northern Lights',
-  'Green Crack'
-];
+import { strainNames } from '@/data/strains';
 
 const WhatsAppWidget = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -90,7 +80,7 @@ const WhatsAppWidget = () => {
                   <SelectValue placeholder="Choose your preferred strain..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {strains.map(strain => (
+                  {strainNames.map(strain => (
                     <SelectItem key={strain} value={strain}>
                       <div className="flex items-center">
                         <Leaf size={14} className="mr-2 text-primary" />
