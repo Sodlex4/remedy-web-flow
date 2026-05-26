@@ -1,73 +1,46 @@
-# Welcome to your Lovable project
+# Nature's Remedy — Dispensary Web App
 
-## Project info
+Cannabis dispensary ordering system serving Murang'a, Kenya. Customers browse strains, request pickups, and admins manage orders — all with real-time Supabase sync.
 
-**URL**: https://lovable.dev/projects/7553a335-dea7-4c87-8ad1-903f3a050bde
+## Tech Stack
 
-## How can I edit this code?
+Vite · React 18 · TypeScript · shadcn/ui · Tailwind CSS · Supabase · React Query · GSAP
 
-There are several ways of editing your application.
+## Pages
 
-**Use Lovable**
+- `/` — Landing (hero, products, about, contact, age gate)
+- `/search` — Strain explorer with search/filter
+- `/request-pickup` — Customer pickup form (submits to Supabase)
+- `/admin/login` — Admin auth (Supabase email/password)
+- `/admin/dashboard` — Live orders table with real-time updates
+- `/admin/calendar` — Calendar view of scheduled pickups
+- `/admin/messages` — Customer message inbox
+- `/admin/ratings` — Customer feedback management
+- `/admin/settings` — Profile, notifications, display, user roles
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7553a335-dea7-4c87-8ad1-903f3a050bde) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Local Setup
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+git clone <repo-url>
+cd remedy-web-flow
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Supabase Setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Create a project at [supabase.com](https://supabase.com)
+2. Update `src/lib/supabase.ts` with your project URL and anon key
+3. Run the SQL migrations in `supabase/migrations/` via the SQL Editor
+4. Add admin users in **Authentication → Users**
+5. Set their role in the `profiles` table (admin / assistant / viewer)
 
-**Use GitHub Codespaces**
+## Roles
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Role | Permissions |
+|------|-------------|
+| Admin | Full access to all features |
+| Assistant | Can view and manage pickup requests |
+| Viewer | Read-only dashboard access |
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/7553a335-dea7-4c87-8ad1-903f3a050bde) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Built with [Lovable.dev](https://lovable.dev)
