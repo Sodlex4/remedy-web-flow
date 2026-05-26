@@ -29,7 +29,9 @@ export const useSupabaseRealtime = ({
       pickupTime: supabaseRequest.pickup_time,
       status: supabaseRequest.status,
       createdAt: supabaseRequest.created_at,
-      totalAmount: supabaseRequest.total_amount
+      totalAmount: supabaseRequest.total_amount,
+      peddlerId: supabaseRequest.peddler_id,
+      county: supabaseRequest.county
     };
   }, []);
 
