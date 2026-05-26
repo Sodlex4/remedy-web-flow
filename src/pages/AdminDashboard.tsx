@@ -28,7 +28,7 @@ const AdminDashboard = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const { user, role, signOut } = useAuth();
-  const { businessName } = useBusiness();
+  const { businessName, content } = useBusiness();
   const [userRole, setUserRole] = useState<'admin' | 'assistant' | 'viewer'>('viewer');
   const [isGoogleConnected, setIsGoogleConnected] = useState(false);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
@@ -171,7 +171,8 @@ const AdminDashboard = () => {
 
   // Welcome message on component mount
   useEffect(() => {
-    toast.success('Welcome back, CHIZOH 👑', {
+    const name = user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
+    toast.success(content('admin_welcome', { name }), {
       description: 'Connected to live Supabase data with real-time notifications',
       duration: 4000,
     });

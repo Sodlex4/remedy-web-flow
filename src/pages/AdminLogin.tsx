@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useBusiness } from '@/context/BusinessContext';
 
 const AdminLogin = () => {
-  const { businessName } = useBusiness();
+  const { businessName, content } = useBusiness();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -50,7 +50,7 @@ const AdminLogin = () => {
             </span>
           </div>
           <h1 className="text-xl font-semibold text-foreground">Admin Portal</h1>
-          <p className="text-muted-foreground">"Don't Panic, It's Organic"</p>
+          <p className="text-muted-foreground">{content('tagline')}</p>
         </div>
 
         {/* Login Form */}

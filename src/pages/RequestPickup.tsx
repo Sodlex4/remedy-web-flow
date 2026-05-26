@@ -6,7 +6,7 @@ import PickupRequestForm from '@/components/PickupRequestForm';
 import { useBusiness } from '@/context/BusinessContext';
 
 const RequestPickup = () => {
-  const { businessName } = useBusiness();
+  const { businessName, content } = useBusiness();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuItems = [
@@ -83,7 +83,7 @@ const RequestPickup = () => {
           </p>
           <div className="mt-4">
             <span className="text-primary font-semibold text-lg">
-              "Don't Panic, It's Organic"
+              {content('tagline')}
             </span>
           </div>
         </div>
