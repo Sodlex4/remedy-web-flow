@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useBusiness } from '@/context/BusinessContext';
+import { useLocation } from '@/context/LocationContext';
 
 interface StrainItem {
   name: string;
@@ -15,6 +16,7 @@ interface StrainItem {
 
 const PickupRequestForm = () => {
   const { businessName } = useBusiness();
+  const { selectedCounty, selectedPeddlerId, selectedPeddler } = useLocation();
   const [strains, setStrains] = useState<StrainItem[]>([]);
   const [formData, setFormData] = useState({
     customerName: '',
@@ -25,16 +27,24 @@ const PickupRequestForm = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const targetPeddlerId = selectedPeddlerId || '00000000-0000-0000-0000-000000000000';
+  const targetCounty = selectedCounty || '';
+
   useEffect(() => {
-    supabase
+    const query = supabase
       .from('strains')
       .select('name, price')
       .eq('available', true)
-      .order('name')
-      .then(({ data }) => {
-        if (data) setStrains(data);
-      });
-  }, []);
+      .order('name');
+
+    if (selectedPeddlerId) {
+      query.eq('peddler_id', selectedPeddlerId);
+    }
+
+    query.then(({ data }) => {
+      if (data) setStrains(data);
+    });
+  }, [selectedPeddlerId]);
 
   const getStrainPrice = (name: string): number => {
     return strains.find(s => s.name === name)?.price ?? 0;
@@ -60,7 +70,9 @@ const PickupRequestForm = () => {
           quantity: formData.quantity,
           pickup_time: formData.pickupTime,
           status: 'new',
-          total_amount: formData.quantity * getStrainPrice(formData.strain)
+          total_amount: formData.quantity * getStrainPrice(formData.strain),
+          peddler_id: targetPeddlerId,
+          county: targetCounty,
         }]);
 
       if (error) {
@@ -82,10 +94,14 @@ const PickupRequestForm = () => {
     }
   };
 
+  const heading = selectedPeddler
+    ? `Request Pickup — ${selectedPeddler.businessName}`
+    : `Request Pickup — ${businessName}`;
+
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Request Pickup — {businessName}</CardTitle>
+        <CardTitle>{heading}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -124,6 +140,11 @@ const PickupRequestForm = () => {
               </SelectContent>
             </Select>
           </div>
+          {targetCounty && (
+            <div className="text-xs text-muted-foreground">
+              County: {targetCounty}
+            </div>
+          )}
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit Request'}
           </Button>

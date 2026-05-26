@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { BusinessProvider } from "@/context/BusinessContext";
+import { LocationProvider } from "@/context/LocationContext";
 import Index from "./pages/Index";
 import RequestPickup from "./pages/RequestPickup";
 import StrainSearch from "./pages/StrainSearch";
@@ -26,6 +27,7 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BusinessProvider>
+          <LocationProvider>
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -40,6 +42,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
+          </LocationProvider>
         </BusinessProvider>
       </AuthProvider>
     </TooltipProvider>

@@ -4,29 +4,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MessageCircle, X, Leaf } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useBusiness } from '@/context/BusinessContext';
+import { useLocation } from '@/context/LocationContext';
 
 const WhatsAppWidget = () => {
-  const { businessName, whatsappNumber } = useBusiness();
+  const { businessName: defaultName, whatsappNumber: defaultPhone } = useBusiness();
+  const { selectedPeddler } = useLocation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSearchPage, setIsSearchPage] = useState(false);
   const [selectedStrain, setSelectedStrain] = useState<string>('');
   const [showStrainSelector, setShowStrainSelector] = useState(false);
   const [strainNames, setStrainNames] = useState<string[]>([]);
 
+  const businessName = selectedPeddler?.businessName || defaultName;
+  const whatsappNumber = selectedPeddler?.whatsappNumber || defaultPhone;
+
   useEffect(() => {
     setIsSearchPage(window.location.pathname === '/search');
   }, []);
 
   useEffect(() => {
-    supabase
+    const query = supabase
       .from('strains')
       .select('name')
       .eq('available', true)
-      .order('name')
-      .then(({ data }) => {
-        if (data) setStrainNames(data.map(s => s.name));
-      });
-  }, []);
+      .order('name');
+
+    if (selectedPeddler?.id) {
+      query.eq('peddler_id', selectedPeddler.id);
+    }
+
+    query.then(({ data }) => {
+      if (data) setStrainNames(data.map(s => s.name));
+    });
+  }, [selectedPeddler?.id]);
 
   const handleWhatsAppClick = (customMessage?: string) => {
     const baseMessage = customMessage || `Hello ${businessName} 🌿 — I'd like to request a pickup${selectedStrain ? ` for ${selectedStrain}` : ''}. Please assist with discreet delivery.`;
@@ -58,7 +68,7 @@ const WhatsAppWidget = () => {
       {isExpanded && (
         <div className="mb-4 bg-card dark:bg-card border border-border dark:border-border rounded-lg p-4 shadow-lg max-w-[calc(100vw-48px)] sm:max-w-sm animate-scale-in">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-foreground dark:text-foreground">Chat Your Favorite Strain 🌿</h3>
+            <h3 className="font-semibold text-foreground dark:text-foreground">{businessName} 🌿</h3>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsExpanded(false)}><X size={14} /></Button>
           </div>
           
