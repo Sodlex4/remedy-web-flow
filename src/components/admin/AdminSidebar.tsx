@@ -12,7 +12,8 @@ import {
   BarChart3,
   Calendar as CalendarIcon,
   MessageCircle,
-  Star
+  Star,
+  Store
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBusiness } from '@/context/BusinessContext';
@@ -79,12 +80,19 @@ const AdminSidebar = ({
       path: '/admin/ratings'
     },
     { 
+      name: 'Peddlers', 
+      icon: Store, 
+      active: false,
+      path: '/admin/peddlers'
+    },
+    { 
       name: 'Settings', 
       icon: Settings, 
       active: false,
       path: '/admin/settings'
     }
   ];
+  const visibleItems = userRole === 'admin' ? sidebarItems : sidebarItems.filter(i => i.name !== 'Peddlers');
 
   const getRoleColor = () => {
     switch (userRole) {
@@ -130,7 +138,7 @@ const AdminSidebar = ({
         {/* Navigation */}
         <nav className="flex-1 px-4">
           <div className="space-y-2">
-            {sidebarItems.map((item) => (
+            {visibleItems.map((item) => (
               <Button
                 key={item.name}
                 variant={item.active ? "secondary" : "ghost"}

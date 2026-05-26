@@ -25,6 +25,8 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [countyFilter, setCountyFilter] = useState('all');
+  const [counties, setCounties] = useState<string[]>([]);
   const [isMuted, setIsMuted] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const { user, role, signOut } = useAuth();
@@ -167,6 +169,16 @@ const AdminDashboard = () => {
   // Load data on mount
   useEffect(() => {
     loadPickupRequests();
+  }, []);
+
+  // Load counties for filter
+  useEffect(() => {
+    supabase.from('profiles').select('county').not('county', 'eq', '').then(({ data }) => {
+      if (data) {
+        const unique = [...new Set(data.map(p => p.county).filter(Boolean))].sort() as string[];
+        setCounties(unique);
+      }
+    });
   }, []);
 
   // Welcome message on component mount
@@ -316,9 +328,10 @@ const AdminDashboard = () => {
 
   const filteredRequests = pickupRequests.filter(req => {
     const matchesStatus = filterStatus === 'all' || req.status === filterStatus;
+    const matchesCounty = countyFilter === 'all' || req.county === countyFilter;
     const matchesSearch = req.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          req.whatsappNumber.includes(searchTerm);
-    return matchesStatus && matchesSearch;
+    return matchesStatus && matchesCounty && matchesSearch;
   });
 
   // Calculate stats from real data
@@ -383,6 +396,9 @@ const AdminDashboard = () => {
             setFilterStatus={setFilterStatus}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            countyFilter={countyFilter}
+            setCountyFilter={setCountyFilter}
+            counties={counties}
           />
 
           {/* Stats Cards */}

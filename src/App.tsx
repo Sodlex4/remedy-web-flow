@@ -12,6 +12,7 @@ import RequestPickup from "./pages/RequestPickup";
 import StrainSearch from "./pages/StrainSearch";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminPeddlers from "./pages/AdminPeddlers";
 import PickupCalendar from "./pages/PickupCalendar";
 import AdminMessages from "./pages/AdminMessages";
 import AdminRatings from "./pages/AdminRatings";
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/admin/calendar" element={<PickupCalendar />} />
               <Route path="/admin/messages" element={<AdminMessages />} />
               <Route path="/admin/ratings" element={<AdminRatings />} />
+              <Route path="/admin/peddlers" element={<AdminPeddlers />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
