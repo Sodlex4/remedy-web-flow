@@ -1,39 +1,27 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { 
-  User, 
-  Bell, 
-  Palette, 
-  Users, 
-  Save,
-  Moon,
-  Sun,
-  Volume2,
-  VolumeX,
-  Calendar,
-  Shield
-} from 'lucide-react';
+import StrainManager from '@/components/admin/StrainManager';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-
-interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'assistant' | 'viewer';
-  lastActive: string;
-}
+import { User, Bell, Palette, Users, Save, Leaf, Moon, Sun, Volume2, VolumeX, Calendar, Shield } from 'lucide-react';
 
 const AdminSettings = () => {
+  const { user } = useAuth();
   const [profileData, setProfileData] = useState({
-    name: 'Chizoh',
-    email: 'admin@naturesremedy.com',
+    name: '',
+    email: '',
+    businessName: '',
+    whatsappNumber: '',
+    county: '',
+    bio: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -53,54 +41,72 @@ const AdminSettings = () => {
     animationsEnabled: true
   });
 
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([
-    {
-      id: '1',
-      name: 'Chizoh (You)',
-      email: 'admin@naturesremedy.com',
-      role: 'admin',
-      lastActive: '2025-01-21T15:30:00Z'
-    },
-    {
-      id: '2',
-      name: 'Assistant Manager',
-      email: 'assistant@naturesremedy.com',
-      role: 'assistant',
-      lastActive: '2025-01-21T10:15:00Z'
-    }
-  ]);
+  const [adminUsers, setAdminUsers] = useState<{id: string; name: string; email: string; role: string; lastActive: string}[]>([]);
+  const [profileLoading, setProfileLoading] = useState(true);
 
-  const handleSaveProfile = () => {
-    if (profileData.newPassword && profileData.newPassword !== profileData.confirmPassword) {
-      toast.error('New passwords do not match');
-      return;
+  const loadProfile = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('name, business_name, whatsapp_number, county, bio, role')
+      .eq('id', user.id)
+      .single();
+    if (data) {
+      setProfileData(prev => ({
+        ...prev,
+        name: data.name || '',
+        email: user.email || '',
+        businessName: data.business_name || '',
+        whatsappNumber: data.whatsapp_number || '',
+        county: data.county || '',
+        bio: data.bio || '',
+      }));
     }
-    
-    // Mock save to Supabase
+    setProfileLoading(false);
+  }, [user]);
+
+  useEffect(() => { loadProfile(); }, [loadProfile]);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    setDisplaySettings(prev => ({ ...prev, darkMode: savedTheme !== 'light' }));
+  }, []);
+
+  const handleSaveProfile = async () => {
+    if (!user) { toast.error('Not authenticated'); return; }
+
+    if (profileData.newPassword) {
+      if (profileData.newPassword !== profileData.confirmPassword) {
+        toast.error('New passwords do not match');
+        return;
+      }
+      const { error: pwError } = await supabase.auth.updateUser({ password: profileData.newPassword });
+      if (pwError) { toast.error('Failed to update password'); return; }
+    }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        name: profileData.name,
+        business_name: profileData.businessName,
+        whatsapp_number: profileData.whatsappNumber,
+        county: profileData.county,
+        bio: profileData.bio,
+      })
+      .eq('id', user.id);
+
+    if (error) { toast.error('Failed to save profile'); return; }
     toast.success('Profile updated successfully');
-    setProfileData(prev => ({
-      ...prev,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    }));
-  };
-
-  const handleSaveNotifications = () => {
-    // Mock save to Supabase
-    toast.success('Notification settings updated');
+    setProfileData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
   };
 
   const handleSaveDisplay = () => {
-    // Mock save to Supabase
     localStorage.setItem('theme', displaySettings.darkMode ? 'dark' : 'light');
-    
     if (displaySettings.darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-    
     toast.success('Display settings updated');
   };
 
@@ -125,10 +131,9 @@ const AdminSettings = () => {
   return (
     <div className="min-h-screen bg-background dark:bg-background p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-          <p className="text-muted-foreground">Manage your admin dashboard preferences</p>
+          <p className="text-muted-foreground">Manage your business profile and preferences</p>
         </div>
 
         <Tabs defaultValue="profile" className="space-y-6">
@@ -136,6 +141,14 @@ const AdminSettings = () => {
             <TabsTrigger value="profile" className="flex items-center space-x-2">
               <User size={16} />
               <span>Profile</span>
+            </TabsTrigger>
+            <TabsTrigger value="business" className="flex items-center space-x-2">
+              <Leaf size={16} />
+              <span>Business</span>
+            </TabsTrigger>
+            <TabsTrigger value="strains" className="flex items-center space-x-2">
+              <Leaf size={16} />
+              <span>Strains</span>
             </TabsTrigger>
             <TabsTrigger value="notifications" className="flex items-center space-x-2">
               <Bell size={16} />
@@ -151,7 +164,6 @@ const AdminSettings = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Profile Settings */}
           <TabsContent value="profile">
             <Card>
               <CardHeader>
@@ -161,70 +173,102 @@ const AdminSettings = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={profileData.name}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profileData.email}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4">Change Password</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="currentPassword">Current Password</Label>
-                      <Input
-                        id="currentPassword"
-                        type="password"
-                        value={profileData.currentPassword}
-                        onChange={(e) => setProfileData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {profileLoading ? (
+                  <p className="text-muted-foreground">Loading profile...</p>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="newPassword">New Password</Label>
-                        <Input
-                          id="newPassword"
-                          type="password"
-                          value={profileData.newPassword}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, newPassword: e.target.value }))}
-                        />
+                        <Label htmlFor="name">Your Name</Label>
+                        <Input id="name" value={profileData.name} onChange={e => setProfileData(prev => ({ ...prev, name: e.target.value }))} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          value={profileData.confirmPassword}
-                          onChange={(e) => setProfileData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        />
+                        <Label htmlFor="email">Email</Label>
+                        <Input id="email" type="email" value={profileData.email} disabled className="opacity-60" />
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                <Button onClick={handleSaveProfile} className="w-full md:w-auto">
-                  <Save className="mr-2" size={16} />
-                  Save Profile Changes
-                </Button>
+                    <div className="border-t pt-6">
+                      <h3 className="text-lg font-semibold mb-4">Change Password</h3>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="newPassword">New Password</Label>
+                            <Input id="newPassword" type="password" value={profileData.newPassword} onChange={e => setProfileData(prev => ({ ...prev, newPassword: e.target.value }))} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                            <Input id="confirmPassword" type="password" value={profileData.confirmPassword} onChange={e => setProfileData(prev => ({ ...prev, confirmPassword: e.target.value }))} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Button onClick={handleSaveProfile} className="w-full md:w-auto">
+                      <Save className="mr-2" size={16} />
+                      Save Profile Changes
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Notification Settings */}
+          <TabsContent value="business">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Leaf className="mr-2" size={20} />
+                  Business Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {profileLoading ? (
+                  <p className="text-muted-foreground">Loading business info...</p>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="businessName">Business Name</Label>
+                        <Input id="businessName" value={profileData.businessName} onChange={e => setProfileData(prev => ({ ...prev, businessName: e.target.value }))} placeholder="Nature's Remedy" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
+                        <Input id="whatsappNumber" value={profileData.whatsappNumber} onChange={e => setProfileData(prev => ({ ...prev, whatsappNumber: e.target.value }))} placeholder="254700000000" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="county">County / Service Area</Label>
+                        <Input id="county" value={profileData.county} onChange={e => setProfileData(prev => ({ ...prev, county: e.target.value }))} placeholder="Murang'a County" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Bio / Description</Label>
+                      <Textarea id="bio" value={profileData.bio} onChange={e => setProfileData(prev => ({ ...prev, bio: e.target.value }))} placeholder="Your trusted licensed cannabis dispensary..." rows={3} />
+                    </div>
+                    <Button onClick={handleSaveProfile} className="w-full md:w-auto">
+                      <Save className="mr-2" size={16} />
+                      Save Business Info
+                    </Button>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="strains">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Leaf className="mr-2" size={20} />
+                  Manage Strains
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <StrainManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="notifications">
             <Card>
               <CardHeader>
@@ -237,84 +281,24 @@ const AdminSettings = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <Label className="flex items-center">
-                        <Bell className="mr-2" size={16} />
-                        Real-time Pickup Alerts
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Get notified when new pickup requests arrive
-                      </p>
+                      <Label className="flex items-center"><Bell className="mr-2" size={16} />Real-time Pickup Alerts</Label>
+                      <p className="text-sm text-muted-foreground">Get notified when new pickup requests arrive</p>
                     </div>
-                    <Switch
-                      checked={notificationSettings.pickupAlerts}
-                      onCheckedChange={(checked) => 
-                        setNotificationSettings(prev => ({ ...prev, pickupAlerts: checked }))
-                      }
-                    />
+                    <Switch checked={notificationSettings.pickupAlerts} onCheckedChange={checked => setNotificationSettings(prev => ({ ...prev, pickupAlerts: checked }))} />
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <Label className="flex items-center">
-                        {notificationSettings.soundEnabled ? (
-                          <Volume2 className="mr-2" size={16} />
-                        ) : (
-                          <VolumeX className="mr-2" size={16} />
-                        )}
-                        Notification Sounds
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Play sound when notifications arrive
-                      </p>
+                      <Label className="flex items-center">{notificationSettings.soundEnabled ? <Volume2 className="mr-2" size={16} /> : <VolumeX className="mr-2" size={16} />}Notification Sounds</Label>
+                      <p className="text-sm text-muted-foreground">Play sound when notifications arrive</p>
                     </div>
-                    <Switch
-                      checked={notificationSettings.soundEnabled}
-                      onCheckedChange={(checked) => 
-                        setNotificationSettings(prev => ({ ...prev, soundEnabled: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>WhatsApp Widget Visibility</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Show WhatsApp contact widget on landing page
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notificationSettings.whatsappWidget}
-                      onCheckedChange={(checked) => 
-                        setNotificationSettings(prev => ({ ...prev, whatsappWidget: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Email Notifications</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receive important updates via email
-                      </p>
-                    </div>
-                    <Switch
-                      checked={notificationSettings.emailNotifications}
-                      onCheckedChange={(checked) => 
-                        setNotificationSettings(prev => ({ ...prev, emailNotifications: checked }))
-                      }
-                    />
+                    <Switch checked={notificationSettings.soundEnabled} onCheckedChange={checked => setNotificationSettings(prev => ({ ...prev, soundEnabled: checked }))} />
                   </div>
                 </div>
-
-                <Button onClick={handleSaveNotifications} className="w-full md:w-auto">
-                  <Save className="mr-2" size={16} />
-                  Save Notification Settings
-                </Button>
+                <Button className="w-full md:w-auto"><Save className="mr-2" size={16} />Save Notification Settings</Button>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* Display Settings */}
           <TabsContent value="display">
             <Card>
               <CardHeader>
@@ -327,84 +311,24 @@ const AdminSettings = () => {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <Label className="flex items-center">
-                        {displaySettings.darkMode ? (
-                          <Moon className="mr-2" size={16} />
-                        ) : (
-                          <Sun className="mr-2" size={16} />
-                        )}
-                        Dark Mode
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Toggle between light and dark themes
-                      </p>
+                      <Label className="flex items-center">{displaySettings.darkMode ? <Moon className="mr-2" size={16} /> : <Sun className="mr-2" size={16} />}Dark Mode</Label>
+                      <p className="text-sm text-muted-foreground">Toggle between light and dark themes</p>
                     </div>
-                    <Switch
-                      checked={displaySettings.darkMode}
-                      onCheckedChange={(checked) => 
-                        setDisplaySettings(prev => ({ ...prev, darkMode: checked }))
-                      }
-                    />
+                    <Switch checked={displaySettings.darkMode} onCheckedChange={checked => setDisplaySettings(prev => ({ ...prev, darkMode: checked }))} />
                   </div>
-
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <Label className="flex items-center">
-                        <Calendar className="mr-2" size={16} />
-                        Auto-Sync Calendar
-                      </Label>
-                      <p className="text-sm text-muted-foreground">
-                        Automatically sync new pickups to Google Calendar
-                      </p>
+                      <Label className="flex items-center"><Calendar className="mr-2" size={16} />Auto-Sync Calendar</Label>
+                      <p className="text-sm text-muted-foreground">Automatically sync new pickups to Google Calendar</p>
                     </div>
-                    <Switch
-                      checked={displaySettings.autoSyncCalendar}
-                      onCheckedChange={(checked) => 
-                        setDisplaySettings(prev => ({ ...prev, autoSyncCalendar: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Compact View</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Use a more compact layout for tables and lists
-                      </p>
-                    </div>
-                    <Switch
-                      checked={displaySettings.compactView}
-                      onCheckedChange={(checked) => 
-                        setDisplaySettings(prev => ({ ...prev, compactView: checked }))
-                      }
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Animations</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Enable smooth transitions and animations
-                      </p>
-                    </div>
-                    <Switch
-                      checked={displaySettings.animationsEnabled}
-                      onCheckedChange={(checked) => 
-                        setDisplaySettings(prev => ({ ...prev, animationsEnabled: checked }))
-                      }
-                    />
+                    <Switch checked={displaySettings.autoSyncCalendar} onCheckedChange={checked => setDisplaySettings(prev => ({ ...prev, autoSyncCalendar: checked }))} />
                   </div>
                 </div>
-
-                <Button onClick={handleSaveDisplay} className="w-full md:w-auto">
-                  <Save className="mr-2" size={16} />
-                  Save Display Settings
-                </Button>
+                <Button onClick={handleSaveDisplay} className="w-full md:w-auto"><Save className="mr-2" size={16} />Save Display Settings</Button>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* User Management */}
           <TabsContent value="users">
             <Card>
               <CardHeader>
@@ -415,39 +339,23 @@ const AdminSettings = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {adminUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                  {adminUsers.map((u) => (
+                    <div key={u.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
                       <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                          <Shield className="text-primary" size={20} />
-                        </div>
+                        <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center"><Shield className="text-primary" size={20} /></div>
                         <div>
-                          <p className="font-medium text-foreground">{user.name}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                          <p className="font-medium text-foreground">{u.name}</p>
+                          <p className="text-sm text-muted-foreground">{u.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <Badge 
-                          className={`${getRoleColor(user.role)} text-white`}
-                          variant={getRoleBadgeVariant(user.role)}
-                        >
-                          {user.role.toUpperCase()}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          Last active: {new Date(user.lastActive).toLocaleDateString()}
-                        </span>
+                        <Badge className={`${getRoleColor(u.role)} text-white`} variant={getRoleBadgeVariant(u.role)}>{u.role.toUpperCase()}</Badge>
                       </div>
                     </div>
                   ))}
-                </div>
-
-                <div className="mt-6 p-4 bg-muted/20 rounded-lg">
-                  <h3 className="font-semibold text-foreground mb-2">Role Permissions</h3>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p><strong>Admin:</strong> Full access to all features</p>
-                    <p><strong>Assistant:</strong> Can view and manage pickup requests</p>
-                    <p><strong>Viewer:</strong> Read-only access to dashboard</p>
-                  </div>
+                  {adminUsers.length === 0 && (
+                    <p className="text-muted-foreground text-center py-4">User management is available for super admin accounts.</p>
+                  )}
                 </div>
               </CardContent>
             </Card>

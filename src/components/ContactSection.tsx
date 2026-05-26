@@ -6,8 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Phone, Clock, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useBusiness } from '@/context/BusinessContext';
 
 const ContactSection = () => {
+  const { businessName, county, whatsappNumber, email: businessEmail } = useBusiness();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -41,7 +43,7 @@ const ContactSection = () => {
             Get In <span className="text-primary">Touch</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Visit our dispensary in Murang'a or reach out to us with any questions. 
+            Visit our dispensary in {county} or reach out to us with any questions. 
             Our knowledgeable team is here to help you on your cannabis journey.
           </p>
         </div>
@@ -59,7 +61,7 @@ const ContactSection = () => {
               <CardContent>
                 <p className="text-muted-foreground">
                   123 Main Street<br />
-                  Murang'a, Muranga County<br />
+                  {county}<br />
                   Kenya
                 </p>
               </CardContent>
@@ -74,10 +76,10 @@ const ContactSection = () => {
               </CardHeader>
               <CardContent>
                 <a 
-                  href="tel:+254700000000" 
+                  href={`tel:+${whatsappNumber}`} 
                   className="text-primary hover:text-secondary transition-colors"
                 >
-                  +254 700 000 000
+                  +{whatsappNumber}
                 </a>
               </CardContent>
             </Card>
@@ -107,10 +109,10 @@ const ContactSection = () => {
               </CardHeader>
               <CardContent>
                 <a 
-                  href="mailto:info@naturesremedy.co.ke" 
+                  href={`mailto:${businessEmail}`} 
                   className="text-primary hover:text-secondary transition-colors"
                 >
-                  info@naturesremedy.co.ke
+                  {businessEmail}
                 </a>
               </CardContent>
             </Card>

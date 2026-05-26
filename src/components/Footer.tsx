@@ -1,7 +1,9 @@
 
 import { Facebook, Instagram, Twitter, Leaf } from 'lucide-react';
+import { useBusiness } from '@/context/BusinessContext';
 
 const Footer = () => {
+  const { businessName, county } = useBusiness();
   return (
     <footer className="bg-background border-t border-border py-12">
       <div className="container mx-auto px-4">
@@ -12,10 +14,10 @@ const Footer = () => {
               <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                 <Leaf className="text-primary-foreground" size={20} />
               </div>
-              <span className="text-xl font-bold text-foreground">Nature's Remedy</span>
+              <span className="text-xl font-bold text-foreground">{businessName}</span>
             </div>
             <p className="text-muted-foreground text-sm">
-              Your trusted licensed cannabis dispensary in Murang'a County, committed to quality, 
+              Your trusted licensed cannabis dispensary in {county}, committed to quality, 
               compliance, and responsible cannabis education.
             </p>
           </div>
@@ -57,7 +59,7 @@ const Footer = () => {
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>Licensed Cannabis Dispensary</p>
               <p>License #: [Your License Number]</p>
-              <p>Murang'a County, Kenya</p>
+              <p>{county}, Kenya</p>
               <p className="text-primary font-medium">Must be 21+ to enter</p>
             </div>
           </div>
@@ -104,7 +106,7 @@ const Footer = () => {
           </div>
 
           <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-            <p>© 2025 Nature's Remedy. All Rights Reserved.</p>
+            <p>© 2025 {businessName}. All Rights Reserved.</p>
             <p className="mt-2 md:mt-0">
               Must be 21+ to enter • Licensed Cannabis Dispensary
             </p>

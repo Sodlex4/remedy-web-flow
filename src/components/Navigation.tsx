@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useBusiness } from '@/context/BusinessContext';
 
 const Navigation = () => {
+  const { businessName } = useBusiness();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuItems = [
@@ -36,7 +38,7 @@ const Navigation = () => {
               <span className="text-primary-foreground font-bold text-lg">NR</span>
             </div>
             <span className="text-xl font-bold text-foreground hidden sm:block">
-              Nature's Remedy
+              {businessName}
             </span>
           </div>
 

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
+import { useBusiness } from '@/context/BusinessContext';
 import { 
   Menu, 
   X, 
@@ -39,6 +40,7 @@ interface PickupRequest {
 }
 
 const PickupCalendar = () => {
+  const { businessName } = useBusiness();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [pickupRequests, setPickupRequests] = useState<PickupRequest[]>([]);
@@ -194,7 +196,7 @@ const PickupCalendar = () => {
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <Leaf className="text-primary-foreground" size={16} />
               </div>
-              <span className="font-bold text-foreground dark:text-foreground">Nature's Remedy</span>
+              <span className="font-bold text-foreground dark:text-foreground">{businessName}</span>
             </div>
             <Button
               variant="ghost"
@@ -477,7 +479,7 @@ const PickupCalendar = () => {
         {/* Footer */}
         <footer className="bg-card dark:bg-card border-t border-border dark:border-border p-4 text-center">
           <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-            Licensed Admin Area — Nature's Remedy © 2025
+            Licensed Admin Area — {businessName} © 2025
           </p>
         </footer>
       </div>

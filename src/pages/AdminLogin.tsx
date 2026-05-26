@@ -7,8 +7,10 @@ import { Leaf, Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
+import { useBusiness } from '@/context/BusinessContext';
 
 const AdminLogin = () => {
+  const { businessName } = useBusiness();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -44,7 +46,7 @@ const AdminLogin = () => {
               <Leaf className="text-primary-foreground" size={24} />
             </div>
             <span className="text-2xl font-bold text-foreground">
-              Nature's Remedy
+              {businessName}
             </span>
           </div>
           <h1 className="text-xl font-semibold text-foreground">Admin Portal</h1>
@@ -65,7 +67,7 @@ const AdminLogin = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="admin@naturesremedy.co.ke"
+                  placeholder="admin@example.com"
                   required
                   className="bg-background border-border text-foreground"
                 />
@@ -110,14 +112,14 @@ const AdminLogin = () => {
         {/* Back to Site Link */}
         <div className="text-center">
           <Link to="/" className="text-primary hover:text-primary/80 text-sm transition-colors">
-            ← Back to Nature's Remedy
+            ← Back to {businessName}
           </Link>
         </div>
 
         {/* Legal Footer */}
         <div className="text-center">
           <p className="text-xs text-muted-foreground">
-            Licensed Admin Area — Nature's Remedy © 2025
+            Licensed Admin Area — {businessName} © 2025
           </p>
         </div>
       </div>

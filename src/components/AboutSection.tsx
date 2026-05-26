@@ -1,8 +1,10 @@
 
 import { Shield, Leaf, Award, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useBusiness } from '@/context/BusinessContext';
 
 const AboutSection = () => {
+  const { businessName, county } = useBusiness();
   const features = [
     {
       icon: Shield,
@@ -34,7 +36,7 @@ const AboutSection = () => {
             Our <span className="text-primary">Story</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Nature's Remedy was founded on the belief that everyone deserves access to high-quality, 
+            {businessName} was founded on the belief that everyone deserves access to high-quality, 
             natural cannabis products in a safe, welcoming environment. We're more than just a dispensary—we're 
             your partners in wellness and advocates for responsible cannabis use.
           </p>
@@ -67,7 +69,7 @@ const AboutSection = () => {
                 <p className="text-sm text-primary font-medium">
                   <strong>Licensed Cannabis Dispensary</strong><br />
                   License Number: [Your License Number]<br />
-                  Murang'a County, Kenya
+                  {county}, Kenya
                 </p>
               </div>
             </div>

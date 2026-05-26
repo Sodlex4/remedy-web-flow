@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,9 +6,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { strainNames, getStrainPrice } from '@/data/strains';
+import { useBusiness } from '@/context/BusinessContext';
+
+interface StrainItem {
+  name: string;
+  price: number;
+}
 
 const PickupRequestForm = () => {
+  const { businessName } = useBusiness();
+  const [strains, setStrains] = useState<StrainItem[]>([]);
   const [formData, setFormData] = useState({
     customerName: '',
     whatsappNumber: '',
@@ -18,6 +24,21 @@ const PickupRequestForm = () => {
     pickupTime: 'anytime'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    supabase
+      .from('strains')
+      .select('name, price')
+      .eq('available', true)
+      .order('name')
+      .then(({ data }) => {
+        if (data) setStrains(data);
+      });
+  }, []);
+
+  const getStrainPrice = (name: string): number => {
+    return strains.find(s => s.name === name)?.price ?? 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,19 +51,17 @@ const PickupRequestForm = () => {
     setIsSubmitting(true);
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('pickup_requests')
-        .insert([
-          {
-            name: formData.customerName,
-            phone: formData.whatsappNumber,
-            strain: formData.strain,
-            quantity: formData.quantity,
-            pickup_time: formData.pickupTime,
-            status: 'new',
-            total_amount: formData.quantity * getStrainPrice(formData.strain)
-          }
-        ]);
+        .insert([{
+          name: formData.customerName,
+          phone: formData.whatsappNumber,
+          strain: formData.strain,
+          quantity: formData.quantity,
+          pickup_time: formData.pickupTime,
+          status: 'new',
+          total_amount: formData.quantity * getStrainPrice(formData.strain)
+        }]);
 
       if (error) {
         console.error('Error submitting request:', error);
@@ -54,15 +73,7 @@ const PickupRequestForm = () => {
         description: `Your pickup request for ${formData.strain} has been submitted.`
       });
 
-      // Reset form
-      setFormData({
-        customerName: '',
-        whatsappNumber: '',
-        strain: '',
-        quantity: 1,
-        pickupTime: 'anytime'
-      });
-
+      setFormData({ customerName: '', whatsappNumber: '', strain: '', quantity: 1, pickupTime: 'anytime' });
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to submit request. Please try again.');
@@ -74,67 +85,37 @@ const PickupRequestForm = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Request Pickup</CardTitle>
+        <CardTitle>Request Pickup — {businessName}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="customerName">Name *</Label>
-            <Input
-              id="customerName"
-              type="text"
-              value={formData.customerName}
-              onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
-              placeholder="Your full name"
-              required
-            />
+            <Input id="customerName" type="text" value={formData.customerName} onChange={e => setFormData({ ...formData, customerName: e.target.value })} placeholder="Your full name" required />
           </div>
-
           <div>
             <Label htmlFor="whatsappNumber">Phone Number *</Label>
-            <Input
-              id="whatsappNumber"
-              type="tel"
-              value={formData.whatsappNumber}
-              onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-              placeholder="+254700123456"
-              required
-            />
+            <Input id="whatsappNumber" type="tel" value={formData.whatsappNumber} onChange={e => setFormData({ ...formData, whatsappNumber: e.target.value })} placeholder="+254700123456" required />
           </div>
-
           <div>
             <Label htmlFor="strain">Strain *</Label>
-            <Select onValueChange={(value) => setFormData({ ...formData, strain: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a strain" />
-              </SelectTrigger>
+            <Select onValueChange={value => setFormData({ ...formData, strain: value })}>
+              <SelectTrigger><SelectValue placeholder="Select a strain" /></SelectTrigger>
               <SelectContent>
-                {strainNames.map(strain => (
-                  <SelectItem key={strain} value={strain}>
-                    {strain} (KSh {getStrainPrice(strain)}/g)
-                  </SelectItem>
+                {strains.map(s => (
+                  <SelectItem key={s.name} value={s.name}>{s.name} (KSh {s.price}/g)</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
-
           <div>
             <Label htmlFor="quantity">Quantity (grams)</Label>
-            <Input
-              id="quantity"
-              type="number"
-              min="1"
-              value={formData.quantity}
-              onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
-            />
+            <Input id="quantity" type="number" min="1" value={formData.quantity} onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })} />
           </div>
-
           <div>
             <Label htmlFor="pickupTime">Preferred Pickup Time</Label>
-            <Select onValueChange={(value) => setFormData({ ...formData, pickupTime: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select pickup time" />
-              </SelectTrigger>
+            <Select onValueChange={value => setFormData({ ...formData, pickupTime: value })}>
+              <SelectTrigger><SelectValue placeholder="Select pickup time" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="morning">Morning (9AM - 12PM)</SelectItem>
                 <SelectItem value="afternoon">Afternoon (12PM - 4PM)</SelectItem>
@@ -143,7 +124,6 @@ const PickupRequestForm = () => {
               </SelectContent>
             </Select>
           </div>
-
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit Request'}
           </Button>

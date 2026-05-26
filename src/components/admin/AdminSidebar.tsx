@@ -15,6 +15,7 @@ import {
   Star
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useBusiness } from '@/context/BusinessContext';
 
 interface AdminSidebarProps {
   isSidebarOpen: boolean;
@@ -41,6 +42,7 @@ const AdminSidebar = ({
   onDisconnectGoogle,
   onLogout
 }: AdminSidebarProps) => {
+  const { businessName } = useBusiness();
   const navigate = useNavigate();
 
   const sidebarItems = [
@@ -103,7 +105,7 @@ const AdminSidebar = ({
               <Leaf className="text-primary-foreground" size={20} />
             </div>
             <div>
-              <span className="font-bold text-foreground dark:text-foreground text-lg">Nature's Remedy</span>
+              <span className="font-bold text-foreground dark:text-foreground text-lg">{businessName}</span>
               <p className="text-xs text-muted-foreground">Admin Panel</p>
             </div>
           </div>

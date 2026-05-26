@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Menu, X, Leaf } from 'lucide-react';
 import PickupRequestForm from '@/components/PickupRequestForm';
+import { useBusiness } from '@/context/BusinessContext';
 
 const RequestPickup = () => {
+  const { businessName } = useBusiness();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuItems = [
@@ -34,7 +36,7 @@ const RequestPickup = () => {
                 <Leaf className="text-primary-foreground" size={20} />
               </div>
               <span className="text-xl font-bold text-foreground">
-                Nature's Remedy
+                {businessName}
               </span>
             </div>
 

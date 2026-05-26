@@ -1,8 +1,10 @@
 
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { useBusiness } from '@/context/BusinessContext';
 
 const HeroSection = () => {
+  const { businessName, county } = useBusiness();
   const typedRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -39,7 +41,7 @@ const HeroSection = () => {
             </h1>
             
             <p className="text-lg md:text-xl text-muted-foreground max-w-lg">
-              Welcome to Nature's Remedy, your trusted licensed cannabis dispensary in Murang'a. 
+              Welcome to {businessName}, your trusted licensed cannabis dispensary in {county}. 
               We're committed to providing premium, organic cannabis products with the highest standards of quality and compliance.
             </p>
             

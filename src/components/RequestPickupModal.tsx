@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useBusiness } from '@/context/BusinessContext';
 
 interface Strain {
   id: string;
@@ -25,6 +26,7 @@ interface RequestPickupModalProps {
 }
 
 const RequestPickupModal = ({ isOpen, onClose, selectedStrains, onRemoveStrain }: RequestPickupModalProps) => {
+  const { businessName } = useBusiness();
   const [formData, setFormData] = useState({
     fullName: '',
     whatsappNumber: '',
@@ -48,7 +50,7 @@ const RequestPickupModal = ({ isOpen, onClose, selectedStrains, onRemoveStrain }
     }
     
     // Create WhatsApp message
-    const message = `Hello Nature's Remedy! I'd like to request a pickup:
+    const message = `Hello ${businessName}! I'd like to request a pickup:
 
 Name: ${formData.fullName}
 Phone: ${formData.whatsappNumber}
