@@ -55,7 +55,7 @@ const AdminSettings = () => {
     darkMode: true, autoSyncCalendar: false, compactView: false, animationsEnabled: true
   });
 
-  const [adminUsers] = useState<{id: string; name: string; email: string; role: string}[]>([]);
+
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
@@ -307,21 +307,10 @@ const AdminSettings = () => {
             <Card>
               <CardHeader><CardTitle><Users className="mr-2 inline" size={20} />User Management</CardTitle></CardHeader>
               <CardContent>
-                {adminUsers.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-4">User management is available for super admin accounts.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {adminUsers.map(u => (
-                      <div key={u.id} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center"><Shield className="text-primary" size={20} /></div>
-                          <div><p className="font-medium">{u.name}</p><p className="text-sm text-muted-foreground">{u.email}</p></div>
-                        </div>
-                        <Badge className={`${getRoleColor(u.role)} text-white`}>{u.role.toUpperCase()}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="bg-muted/50 border border-border rounded-xl p-6 text-center">
+                  <Shield className="mx-auto mb-3 text-muted-foreground" size={32} />
+                  <p className="text-sm text-muted-foreground">User management — Coming Soon</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

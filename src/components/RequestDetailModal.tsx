@@ -16,17 +16,7 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
-
-interface PickupRequest {
-  id: string;
-  customerName: string;
-  whatsappNumber: string;
-  items: string[];
-  pickupTime: string;
-  status: 'new' | 'seen' | 'ready';
-  createdAt: string;
-  totalAmount: number;
-}
+import type { PickupRequest } from '@/types/pickupRequest';
 
 interface RequestDetailModalProps {
   request: PickupRequest;

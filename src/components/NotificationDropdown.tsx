@@ -24,6 +24,7 @@ const NotificationDropdown = ({ requests, onMarkAllSeen, onRequestClick }: Notif
         size="icon"
         onClick={() => setIsOpen(!isOpen)}
         className="relative text-muted-foreground hover:text-foreground"
+        aria-label={isOpen ? 'Close notifications' : 'Open notifications'}
       >
         <Bell size={20} />
         {newRequests.length > 0 && (
@@ -53,6 +54,7 @@ const NotificationDropdown = ({ requests, onMarkAllSeen, onRequestClick }: Notif
                   size="icon"
                   onClick={() => setIsOpen(false)}
                   className="h-6 w-6"
+                  aria-label="Close notifications"
                 >
                   <X size={14} />
                 </Button>
@@ -63,6 +65,7 @@ const NotificationDropdown = ({ requests, onMarkAllSeen, onRequestClick }: Notif
                   size="sm"
                   onClick={onMarkAllSeen}
                   className="mt-2 text-xs"
+                  aria-label="Mark all notifications as seen"
                 >
                   Mark all as seen
                 </Button>

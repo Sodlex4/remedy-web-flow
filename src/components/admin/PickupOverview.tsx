@@ -51,6 +51,7 @@ const PickupOverview = ({
                 value={countyFilter}
                 onChange={(e) => setCountyFilter(e.target.value)}
                 className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm"
+                aria-label="Filter by county"
               >
                 <option value="all">All Counties</option>
                 {counties.map(c => <option key={c} value={c}>{c}</option>)}
@@ -59,6 +60,7 @@ const PickupOverview = ({
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-sm"
+                aria-label="Filter by status"
               >
                 <option value="all">All Status</option>
                 <option value="new">New</option>
@@ -75,6 +77,7 @@ const PickupOverview = ({
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-background border border-border rounded-xl pl-10 pr-4 py-2 text-sm"
+                aria-label="Search customers"
               />
             </div>
           </div>

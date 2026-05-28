@@ -190,14 +190,14 @@ const AdminPeddlers = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 shrink-0">
-                        <Button variant="ghost" size="icon" onClick={() => startEdit(peddler)}><Pencil size={14} /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => startEdit(peddler)} aria-label="Edit peddler"><Pencil size={14} /></Button>
                         {showDeleteConfirm === peddler.id ? (
                           <div className="flex items-center space-x-1">
                             <Button variant="destructive" size="sm" onClick={() => handleDelete(peddler.id)}>Confirm</Button>
                             <Button variant="ghost" size="sm" onClick={() => setShowDeleteConfirm(null)}>Cancel</Button>
                           </div>
                         ) : (
-                          <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(peddler.id)} className="text-destructive"><Trash2 size={14} /></Button>
+                          <Button variant="ghost" size="icon" onClick={() => setShowDeleteConfirm(peddler.id)} className="text-destructive" aria-label="Delete peddler"><Trash2 size={14} /></Button>
                         )}
                       </div>
                     </div>
