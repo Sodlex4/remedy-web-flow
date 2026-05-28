@@ -28,7 +28,11 @@ const AdminDashboard = () => {
   const [countyFilter, setCountyFilter] = useState('all');
   const [counties, setCounties] = useState<string[]>([]);
   const [isMuted, setIsMuted] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
   const { user, role, signOut } = useAuth();
   const { businessName, content } = useBusiness();
   const [userRole, setUserRole] = useState<'admin' | 'assistant' | 'viewer'>('viewer');
@@ -116,6 +120,7 @@ const AdminDashboard = () => {
       toast.error('Failed to load pickup requests');
     } finally {
       setLoading(false);
+      setDataLoaded(true);
     }
   };
 
@@ -171,6 +176,19 @@ const AdminDashboard = () => {
     loadPickupRequests();
   }, []);
 
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Welcome message after data loads
+  useEffect(() => {
+    if (dataLoaded && user) {
+      const name = user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
+      toast.success(content('admin_welcome', { name }), {
+        description: 'Connected to live Supabase data with real-time notifications',
+        duration: 4000,
+      });
+    }
+  }, [dataLoaded, user]);
+
   // Load counties for filter
   useEffect(() => {
     supabase.from('profiles').select('county').not('county', 'eq', '').then(({ data }) => {
@@ -178,15 +196,6 @@ const AdminDashboard = () => {
         const unique = [...new Set(data.map(p => p.county).filter(Boolean))].sort() as string[];
         setCounties(unique);
       }
-    });
-  }, []);
-
-  // Welcome message on component mount
-  useEffect(() => {
-    const name = user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
-    toast.success(content('admin_welcome', { name }), {
-      description: 'Connected to live Supabase data with real-time notifications',
-      duration: 4000,
     });
   }, []);
 

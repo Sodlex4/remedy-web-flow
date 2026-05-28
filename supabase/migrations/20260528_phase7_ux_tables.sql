@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   email TEXT NOT NULL DEFAULT '',
   subject TEXT NOT NULL DEFAULT '',
   message TEXT NOT NULL DEFAULT '',
+  source TEXT NOT NULL DEFAULT 'contact',
+  is_read BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT now(),
   peddler_id UUID REFERENCES profiles(id) ON DELETE CASCADE
 );
