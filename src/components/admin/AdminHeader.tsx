@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { 
   Menu,
-  Bell,
   Sun,
   Moon,
   VolumeX,
@@ -52,6 +51,7 @@ const AdminHeader = ({
             size="icon"
             className="lg:hidden rounded-xl"
             onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open sidebar menu"
           >
             <Menu size={20} />
           </Button>
@@ -77,25 +77,6 @@ const AdminHeader = ({
             <Moon size={16} className="text-muted-foreground" />
           </div>
           
-          {/* Notification Bell */}
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground rounded-xl"
-            >
-              <Bell size={16} />
-              {unreadCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center animate-pulse"
-                >
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </Badge>
-              )}
-            </Button>
-          </div>
-          
           {/* Notification Dropdown */}
           <NotificationDropdown
             requests={pickupRequests}
@@ -108,6 +89,7 @@ const AdminHeader = ({
             size="icon"
             onClick={toggleMute}
             className="text-muted-foreground hover:text-foreground rounded-xl"
+            aria-label={isMuted ? 'Unmute notifications' : 'Mute notifications'}
           >
             {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
           </Button>

@@ -28,6 +28,7 @@ const StrainSearch = () => {
   const [selectedStrains, setSelectedStrains] = useState<StrainItem[]>([]);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [strainError, setStrainError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const filters = ['All', 'Indica', 'Sativa', 'Hybrid', 'Edibles', 'Accessories'];
 
@@ -43,6 +44,7 @@ const StrainSearch = () => {
     }
 
     query.then(({ data, error }) => {
+      setLoading(false);
       if (error) {
         console.error('Failed to load strains:', error);
         setStrainError('Failed to load products. Please try again later.');
@@ -100,7 +102,7 @@ const StrainSearch = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4 mb-6">
             <Link to="/">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" aria-label="Back to home">
                 <ArrowLeft size={20} />
               </Button>
             </Link>
@@ -135,7 +137,11 @@ const StrainSearch = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-20">
-          {filteredStrains.map(strain => (
+          {loading ? (
+            <div className="col-span-full flex items-center justify-center py-20">
+              <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+            </div>
+          ) : filteredStrains.map(strain => (
             <Card key={strain.id} className="bg-card border-border hover:border-primary/50 transition-all duration-300 group hover:scale-105 hover:shadow-lg hover:shadow-primary/25">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start mb-2">

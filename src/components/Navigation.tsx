@@ -63,6 +63,7 @@ const Navigation = () => {
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:text-primary relative"
+                aria-label="Search products"
               >
                 <Search size={20} />
               </Button>

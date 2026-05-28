@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, X } from 'lucide-react';
 import { useLocation } from '@/context/LocationContext';
+import { useNavigate } from 'react-router-dom';
 
 const KENYAN_COUNTIES = [
   'Baringo', 'Bomet', 'Bungoma', 'Busia', 'Elgeyo-Marakwet', 'Embu', 'Garissa', 'Homa Bay',
@@ -17,6 +18,7 @@ const CountySelector = () => {
   const { selectedCounty, setSelectedCounty, setSelectedPeddlerId, counties } = useLocation();
   const [dismissed, setDismissed] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (counties.length === 0) {
@@ -85,7 +87,7 @@ const CountySelector = () => {
         )}
 
         <div className="text-center mt-4">
-          <Button variant="ghost" size="sm" onClick={() => setDismissed(true)} className="text-muted-foreground">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/search')} className="text-muted-foreground">
             <X size={14} className="mr-1" /> Skip — browse all products
           </Button>
         </div>

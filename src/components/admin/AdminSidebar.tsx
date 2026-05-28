@@ -114,6 +114,7 @@ const AdminSidebar = ({
             size="icon"
             className="lg:hidden"
             onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close sidebar menu"
           >
             <X size={20} />
           </Button>
