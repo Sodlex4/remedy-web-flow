@@ -57,7 +57,17 @@ const Footer = () => {
           </div>
           <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
             <p>© 2025 {businessName}. All Rights Reserved.</p>
-            <p className="mt-2 md:mt-0">Must be 21+ to enter • Licensed Cannabis Dispensary</p>
+            <p className="mt-2 md:mt-0">
+              Made with <span className="text-red-500">❤️</span> by{' '}
+              <a
+                href="https://github.com/Sodlex4"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors"
+              >
+                Sodlex4
+              </a>
+            </p>
           </div>
         </div>
       </div>

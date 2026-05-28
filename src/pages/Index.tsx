@@ -11,7 +11,6 @@ import AboutSection from '@/components/AboutSection';
 import ContactSection from '@/components/ContactSection';
 import FeedbackModal from '@/components/FeedbackModal';
 import WhatsAppWidget from '@/components/WhatsAppWidget';
-import TypedFooter from '@/components/TypedFooter';
 import Footer from '@/components/Footer';
 import AnimatedSVGBackground from '@/components/AnimatedSVGBackground';
 import { useScrollAnimations } from '@/hooks/useScrollAnimations';
@@ -74,10 +73,6 @@ const Index = () => {
       
       <FeedbackModal />
       <WhatsAppWidget />
-      
-      <div className="gsap-fade">
-        <TypedFooter />
-      </div>
       
       <div className="gsap-fade">
         <Footer />
