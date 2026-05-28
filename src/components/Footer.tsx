@@ -56,7 +56,7 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground">{legalDisclaimer}</p>
           </div>
           <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-            <p>© 2025 {businessName}. All Rights Reserved.</p>
+            <p>© 2026 {businessName}. All Rights Reserved.</p>
             <p className="mt-2 md:mt-0">
               Made with <span className="text-red-500">❤️</span> by{' '}
               <a

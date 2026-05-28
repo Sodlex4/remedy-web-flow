@@ -4,16 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Phone, Clock, Mail } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { useBusiness } from '@/context/BusinessContext';
 import { useLocation } from '@/context/LocationContext';
 import { supabase } from '@/lib/supabase';
-import { toast as sonnerToast } from 'sonner';
+import { toast } from 'sonner';
 
 const ContactSection = () => {
   const { county, whatsappNumber, email: businessEmail, content } = useBusiness();
   const { selectedPeddler } = useLocation();
-  const { toast } = useToast();
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,11 +38,11 @@ const ContactSection = () => {
 
     if (error) {
       console.error('Failed to save contact message:', error);
-      sonnerToast.error('Failed to send message. Please try again.');
+      toast.error('Failed to send message. Please try again.');
       return;
     }
 
-    toast({ title: "Message Sent!", description: "Thank you for contacting us. We'll get back to you soon." });
+    toast.success("Message Sent!", { description: "Thank you for contacting us. We'll get back to you soon." });
     setFormData({ name: '', email: '', subject: '', message: '' });
   };
 

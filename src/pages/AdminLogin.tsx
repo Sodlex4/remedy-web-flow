@@ -119,7 +119,7 @@ const AdminLogin = () => {
         {/* Legal Footer */}
         <div className="text-center">
           <p className="text-xs text-muted-foreground">
-            Licensed Admin Area — {businessName} © 2025
+            Licensed Admin Area — {businessName} © 2026
           </p>
         </div>
       </div>

@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { useBusiness } from '@/context/BusinessContext';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
+import type { SupabasePickupRequest } from '@/types/pickupRequest';
 import { 
   Menu, 
   X, 
@@ -18,97 +21,76 @@ import {
   User,
   Search,
   Filter,
-  Calendar as CalendarIcon,
   Download,
-  MessageCircle
+  MessageCircle,
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { format, isToday, isTomorrow, parseISO } from 'date-fns';
+import { format, isToday, isTomorrow } from 'date-fns';
 
-interface PickupRequest {
+interface LocalPickupRequest {
   id: string;
   customerName: string;
   whatsappNumber: string;
   items: string[];
   pickupTime: string;
-  status: 'pending' | 'confirmed' | 'completed';
+  status: string;
   createdAt: string;
   totalAmount: number;
   scheduledDate?: string;
   strain?: string;
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  new: 'Pending',
+  seen: 'Confirmed',
+  ready: 'Ready',
+  completed: 'Completed',
+};
+
 const PickupCalendar = () => {
   const { businessName } = useBusiness();
+  const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [pickupRequests, setPickupRequests] = useState<PickupRequest[]>([]);
+  const [pickupRequests, setPickupRequests] = useState<LocalPickupRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [strainFilter, setStrainFilter] = useState<string>('all');
   const navigate = useNavigate();
 
-  // Mock data with enhanced status and strains
   useEffect(() => {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dayAfter = new Date(today);
-    dayAfter.setDate(dayAfter.getDate() + 2);
-    
-    const mockRequests: PickupRequest[] = [
-      {
-        id: '1',
-        customerName: 'John Doe',
-        whatsappNumber: '+254700123456',
-        items: ['Blue Dream (1g)', 'RAW Papers (2 packs)'],
-        pickupTime: 'morning',
-        status: 'confirmed',
-        createdAt: '2025-01-21T10:30:00Z',
-        totalAmount: 1900,
-        scheduledDate: format(today, 'yyyy-MM-dd'),
-        strain: 'Blue Dream'
-      },
-      {
-        id: '2',
-        customerName: 'Jane Miller',
-        whatsappNumber: '+254701234567',
-        items: ['Girl Scout Cookies (2g)', 'Grinder (1pc)'],
-        pickupTime: 'afternoon',
-        status: 'pending',
-        createdAt: '2025-01-21T08:15:00Z',
-        totalAmount: 3200,
-        scheduledDate: format(tomorrow, 'yyyy-MM-dd'),
-        strain: 'Girl Scout Cookies'
-      },
-      {
-        id: '3',
-        customerName: 'Mike Johnson',
-        whatsappNumber: '+254702345678',
-        items: ['OG Kush (1g)', 'Lighter'],
-        pickupTime: 'evening',
-        status: 'completed',
-        createdAt: '2025-01-20T16:45:00Z',
-        totalAmount: 1600,
-        scheduledDate: format(dayAfter, 'yyyy-MM-dd'),
-        strain: 'OG Kush'
-      },
-      {
-        id: '4',
-        customerName: 'Sarah Wilson',
-        whatsappNumber: '+254703456789',
-        items: ['White Widow (1.5g)'],
-        pickupTime: 'morning',
-        status: 'pending',
-        createdAt: '2025-01-22T09:20:00Z',
-        totalAmount: 2400,
-        scheduledDate: format(today, 'yyyy-MM-dd'),
-        strain: 'White Widow'
-      }
-    ];
-    
-    setPickupRequests(mockRequests);
+    supabase
+      .from('pickup_requests')
+      .select('*')
+      .order('pickup_time', { ascending: true })
+      .then(({ data, error: fetchError }) => {
+        setLoading(false);
+        if (fetchError) {
+          console.error('Failed to load pickup requests:', fetchError);
+          setError('Failed to load pickup requests');
+          toast.error('Failed to load calendar data');
+          return;
+        }
+        if (data) {
+          const mapped: LocalPickupRequest[] = (data as SupabasePickupRequest[]).map(r => ({
+            id: r.id.toString(),
+            customerName: r.name,
+            whatsappNumber: r.phone,
+            items: [r.strain + (r.quantity ? ` (${r.quantity}g)` : '')],
+            pickupTime: r.pickup_time,
+            status: r.status,
+            createdAt: r.created_at,
+            totalAmount: r.total_amount,
+            scheduledDate: r.created_at ? format(new Date(r.created_at), 'yyyy-MM-dd') : undefined,
+            strain: r.strain,
+          }));
+          setPickupRequests(mapped);
+        }
+      });
   }, []);
 
   const getFilteredRequests = () => {
@@ -139,25 +121,34 @@ const PickupCalendar = () => {
 
     return {
       total: thisWeek.length,
-      pending: thisWeek.filter(r => r.status === 'pending').length,
-      confirmed: thisWeek.filter(r => r.status === 'confirmed').length,
+      pending: thisWeek.filter(r => r.status === 'new').length,
+      confirmed: thisWeek.filter(r => r.status === 'seen' || r.status === 'ready').length,
       completed: thisWeek.filter(r => r.status === 'completed').length
     };
   };
 
-  const markAsCompleted = (id: string) => {
+  const markAsCompleted = async (id: string) => {
+    const { error: updateError } = await supabase
+      .from('pickup_requests')
+      .update({ status: 'completed' })
+      .eq('id', id);
+    if (updateError) {
+      toast.error('Failed to update status');
+      return;
+    }
     setPickupRequests(prev => 
       prev.map(req => 
-        req.id === id ? { ...req, status: 'completed' as const } : req
+        req.id === id ? { ...req, status: 'completed' } : req
       )
     );
-    toast.success('Pickup marked as completed! 🎉');
+    toast.success('Pickup marked as completed!');
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500';
-      case 'confirmed': return 'bg-green-500';
+      case 'new': return 'bg-yellow-500';
+      case 'seen': return 'bg-blue-500';
+      case 'ready': return 'bg-green-500';
       case 'completed': return 'bg-gray-500';
       default: return 'bg-gray-500';
     }
@@ -239,7 +230,7 @@ const PickupCalendar = () => {
               <h1 className="text-xl font-semibold text-foreground dark:text-foreground">Pickup Calendar</h1>
             </div>
             <div className="flex items-center space-x-3">
-              <span className="text-muted-foreground dark:text-muted-foreground">Welcome, Chizoh</span>
+              <span className="text-muted-foreground dark:text-muted-foreground">Welcome, {user?.name || 'Admin'}</span>
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                 <User className="text-primary-foreground" size={16} />
               </div>
@@ -295,8 +286,9 @@ const PickupCalendar = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="new">Pending</SelectItem>
+                <SelectItem value="seen">Confirmed</SelectItem>
+                <SelectItem value="ready">Ready</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
@@ -317,6 +309,18 @@ const PickupCalendar = () => {
 
         {/* Calendar Content */}
         <main className="flex-1 p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="animate-spin text-muted-foreground" size={32} />
+            </div>
+          ) : error ? (
+            <div className="text-center py-20">
+              <p className="text-destructive mb-4">{error}</p>
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Retry
+              </Button>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Calendar */}
             <Card className="lg:col-span-1 bg-card dark:bg-card border-border dark:border-border">
@@ -331,8 +335,8 @@ const PickupCalendar = () => {
                   className="rounded-md border border-border dark:border-border"
                   modifiers={{
                     hasPickups: (date) => getRequestsForDate(date).length > 0,
-                    hasPending: (date) => getRequestsForDate(date).some(r => r.status === 'pending'),
-                    hasConfirmed: (date) => getRequestsForDate(date).some(r => r.status === 'confirmed'),
+                    hasPending: (date) => getRequestsForDate(date).some(r => r.status === 'new'),
+                    hasConfirmed: (date) => getRequestsForDate(date).some(r => r.status === 'seen' || r.status === 'ready'),
                     hasCompleted: (date) => getRequestsForDate(date).some(r => r.status === 'completed')
                   }}
                   modifiersStyles={{
@@ -409,7 +413,7 @@ const PickupCalendar = () => {
                                 <Badge 
                                   className={`${getStatusColor(request.status)} text-white text-xs`}
                                 >
-                                  {request.status.toUpperCase()}
+                                  {(STATUS_LABELS[request.status] || request.status).toUpperCase()}
                                 </Badge>
                               </div>
                               
@@ -474,12 +478,13 @@ const PickupCalendar = () => {
               </CardContent>
             </Card>
           </div>
+        )}
         </main>
 
         {/* Footer */}
         <footer className="bg-card dark:bg-card border-t border-border dark:border-border p-4 text-center">
           <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-            Licensed Admin Area — {businessName} © 2025
+            Licensed Admin Area — {businessName} © 2026
           </p>
         </footer>
       </div>

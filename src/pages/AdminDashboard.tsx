@@ -28,16 +28,6 @@ const AdminDashboard = () => {
   const [countyFilter, setCountyFilter] = useState('all');
   const [counties, setCounties] = useState<string[]>([]);
   const [isMuted, setIsMuted] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    if (saved) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-  const { user, role, signOut } = useAuth();
-  const { businessName, content } = useBusiness();
-  const [userRole, setUserRole] = useState<'admin' | 'assistant' | 'viewer'>('viewer');
-  const [isGoogleConnected, setIsGoogleConnected] = useState(false);
-  const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   
@@ -309,32 +299,6 @@ const AdminDashboard = () => {
     toast.info(isMuted ? 'Notifications unmuted 🔊' : 'Notifications muted 🔇');
   };
 
-  const handleGoogleAuth = () => {
-    toast.success('Connected to Google Calendar successfully!');
-    setIsGoogleConnected(true);
-  };
-
-  const disconnectGoogle = () => {
-    setIsGoogleConnected(false);
-    setAutoSyncEnabled(false);
-    toast.info('Disconnected from Google Calendar');
-  };
-
-  const syncToGoogleCalendar = (request: PickupRequest) => {
-    if (!isGoogleConnected) {
-      toast.error('Please connect to Google Calendar first');
-      return;
-    }
-
-    const updatedRequests = pickupRequests.map(req => 
-      req.id === request.id 
-        ? { ...req, isGoogleSynced: true, lastSynced: new Date().toISOString() }
-        : req
-    );
-    setPickupRequests(updatedRequests);
-    toast.success(`Pickup synced to Google Calendar: ${request.customerName}`);
-  };
-
   const filteredRequests = pickupRequests.filter(req => {
     const matchesStatus = filterStatus === 'all' || req.status === filterStatus;
     const matchesCounty = countyFilter === 'all' || req.county === countyFilter;
@@ -367,11 +331,6 @@ const AdminDashboard = () => {
         setIsSidebarOpen={setIsSidebarOpen}
         userRole={userRole}
         newRequestsCount={newRequestsCount}
-        isGoogleConnected={isGoogleConnected}
-        autoSyncEnabled={autoSyncEnabled}
-        setAutoSyncEnabled={setAutoSyncEnabled}
-        onGoogleAuth={handleGoogleAuth}
-        onDisconnectGoogle={disconnectGoogle}
         onLogout={handleLogout}
       />
 
@@ -455,7 +414,7 @@ const AdminDashboard = () => {
         {/* Footer */}
         <footer className="bg-card dark:bg-card border-t border-border dark:border-border p-4 text-center">
           <p className="text-sm text-muted-foreground dark:text-muted-foreground">
-            Licensed Admin Area — {businessName} © 2025 | Connected to Supabase with Real-time Notifications
+            Licensed Admin Area — {businessName} © 2026 | Connected to Supabase with Real-time Notifications
           </p>
         </footer>
       </div>
@@ -468,8 +427,6 @@ const AdminDashboard = () => {
           onClose={() => setSelectedRequest(null)}
           onUpdateStatus={updateRequestStatus}
           userRole={userRole}
-          onSyncToGoogle={syncToGoogleCalendar}
-          isGoogleConnected={isGoogleConnected}
         />
       )}
     </div>

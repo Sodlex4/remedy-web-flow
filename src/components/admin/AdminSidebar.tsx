@@ -1,7 +1,6 @@
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { 
   X, 
   Leaf, 
@@ -22,11 +21,6 @@ interface AdminSidebarProps {
   setIsSidebarOpen: (open: boolean) => void;
   userRole: 'admin' | 'assistant' | 'viewer';
   newRequestsCount: number;
-  isGoogleConnected: boolean;
-  autoSyncEnabled: boolean;
-  setAutoSyncEnabled: (enabled: boolean) => void;
-  onGoogleAuth: () => void;
-  onDisconnectGoogle: () => void;
   onLogout: () => void;
 }
 
@@ -35,11 +29,6 @@ const AdminSidebar = ({
   setIsSidebarOpen,
   userRole,
   newRequestsCount,
-  isGoogleConnected,
-  autoSyncEnabled,
-  setAutoSyncEnabled,
-  onGoogleAuth,
-  onDisconnectGoogle,
   onLogout
 }: AdminSidebarProps) => {
   const { businessName } = useBusiness();
@@ -153,34 +142,14 @@ const AdminSidebar = ({
           </div>
         </nav>
 
-        {/* Google Calendar Integration */}
+        {/* Google Calendar Integration — Coming Soon */}
         <div className="p-4 border-t border-border dark:border-border">
-          {!isGoogleConnected ? (
-            <Button
-              onClick={onGoogleAuth}
-              className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-12"
-            >
-              <CalendarIcon className="mr-2" size={16} />
-              Connect Google Calendar
-            </Button>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Auto-Sync</span>
-                <Switch
-                  checked={autoSyncEnabled}
-                  onCheckedChange={setAutoSyncEnabled}
-                />
-              </div>
-              <Button
-                onClick={onDisconnectGoogle}
-                variant="outline"
-                className="w-full rounded-xl"
-              >
-                Disconnect Calendar
-              </Button>
-            </div>
-          )}
+          <div className="bg-muted/50 rounded-xl p-3 text-center">
+            <CalendarIcon className="mx-auto mb-2 text-muted-foreground" size={20} />
+            <p className="text-xs text-muted-foreground">
+              Google Calendar Sync<br />Coming Soon
+            </p>
+          </div>
         </div>
 
         {/* Logout */}
