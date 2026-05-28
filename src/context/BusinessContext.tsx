@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from './AuthContext';
 
 export interface ContentSettings {
   tagline: string;
@@ -75,14 +76,19 @@ function interpolate(text: string, vars: Record<string, string>): string {
 }
 
 export const BusinessProvider = ({ children }: { children: React.ReactNode }) => {
+  const { sellerId } = useAuth();
   const [info, setInfo] = useState<BusinessInfo>(defaultBusiness);
 
-  const fetchBusiness = useCallback(async () => {
+  const fetchBusiness = useCallback(async (sid: string) => {
+    if (!sid) {
+      setInfo(prev => ({ ...prev, loading: false }));
+      return;
+    }
+
     const { data } = await supabase
-      .from('profiles')
-      .select('business_name, whatsapp_number, county, bio, name, settings')
-      .eq('role', 'admin')
-      .limit(1)
+      .from('sellers')
+      .select('business_name, whatsapp_number, county, bio, settings')
+      .eq('id', sid)
       .maybeSingle();
 
     if (data) {
@@ -112,8 +118,8 @@ export const BusinessProvider = ({ children }: { children: React.ReactNode }) =>
   }, []);
 
   useEffect(() => {
-    fetchBusiness();
-  }, [fetchBusiness]);
+    fetchBusiness(sellerId);
+  }, [sellerId, fetchBusiness]);
 
   const content = useCallback((key: string, vars?: Record<string, string>): string => {
     const value = info.settings[key as keyof ContentSettings];

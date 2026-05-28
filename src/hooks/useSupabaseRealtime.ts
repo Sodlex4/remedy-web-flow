@@ -30,7 +30,7 @@ export const useSupabaseRealtime = ({
       status: supabaseRequest.status,
       createdAt: supabaseRequest.created_at,
       totalAmount: supabaseRequest.total_amount,
-      peddlerId: supabaseRequest.peddler_id,
+      sellerId: supabaseRequest.seller_id,
       county: supabaseRequest.county
     };
   }, []);

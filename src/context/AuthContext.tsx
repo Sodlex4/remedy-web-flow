@@ -5,6 +5,7 @@ import type { User } from '@supabase/supabase-js';
 interface AuthContextValue {
   user: User | null;
   role: 'admin' | 'assistant' | 'viewer';
+  sellerId: string;
   loading: boolean;
   businessName: string;
   whatsappNumber: string;
@@ -16,6 +17,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   role: 'viewer',
+  sellerId: '',
   loading: true,
   businessName: '',
   whatsappNumber: '',
@@ -29,22 +31,42 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<'admin' | 'assistant' | 'viewer'>('viewer');
+  const [sellerId, setSellerId] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [whatsappNumber, setWhatsappNumber] = useState('');
   const [county, setCounty] = useState('');
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data } = await supabase
+    const { data: profile } = await supabase
       .from('profiles')
-      .select('role, business_name, whatsapp_number, county')
+      .select('role, seller_id')
       .eq('id', userId)
       .single();
-    if (data) {
-      setRole((data.role || 'viewer') as 'admin' | 'assistant' | 'viewer');
-      setBusinessName(data.business_name || '');
-      setWhatsappNumber(data.whatsapp_number || '');
-      setCounty(data.county || '');
+
+    if (profile) {
+      const r = (profile.role || 'viewer') as 'admin' | 'assistant' | 'viewer';
+      setRole(r);
+      const sid = profile.seller_id || '';
+      setSellerId(sid);
+
+      if (sid) {
+        const { data: seller } = await supabase
+          .from('sellers')
+          .select('business_name, whatsapp_number, county')
+          .eq('id', sid)
+          .maybeSingle();
+
+        if (seller) {
+          setBusinessName(seller.business_name || '');
+          setWhatsappNumber(seller.whatsapp_number || '');
+          setCounty(seller.county || '');
+          return;
+        }
+      }
+      setBusinessName('');
+      setWhatsappNumber('');
+      setCounty('');
     }
   }, []);
 
@@ -73,13 +95,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
     setRole('viewer');
+    setSellerId('');
     setBusinessName('');
     setWhatsappNumber('');
     setCounty('');
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, businessName, whatsappNumber, county, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, role, sellerId, loading, businessName, whatsappNumber, county, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

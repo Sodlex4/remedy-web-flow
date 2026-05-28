@@ -1,7 +1,16 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { useNearbySellers } from '@/hooks/useNearbySellers';
+import { useRealtimeSellers } from '@/hooks/useRealtimeSellers';
+import type {
+  NearbySeller,
+  GeoLocation,
+  PermissionState,
+  LocationPhase,
+} from '@/types/seller';
 
-interface PeddlerInfo {
+interface SellerInfo {
   id: string;
   businessName: string;
   whatsappNumber: string;
@@ -12,41 +21,108 @@ interface PeddlerInfo {
 interface LocationContextValue {
   selectedCounty: string;
   setSelectedCounty: (county: string) => void;
-  selectedPeddlerId: string;
-  setSelectedPeddlerId: (id: string) => void;
-  selectedPeddler: PeddlerInfo | null;
+  selectedSellerId: string;
+  setSelectedSellerId: (id: string) => void;
+  selectedSeller: SellerInfo | null;
   counties: string[];
-  peddlers: PeddlerInfo[];
+  sellers: SellerInfo[];
   loading: boolean;
   clearLocation: () => void;
+
+  geoLocation: GeoLocation | null;
+  permissionState: PermissionState;
+  locationPhase: LocationPhase;
+  locationError: string | null;
+  nearbySellers: NearbySeller[];
+  nearbyLoading: boolean;
+  nearbyExpanded: boolean;
+  detectLocation: () => void;
+  resetLocation: () => void;
 }
 
 const LocationContext = createContext<LocationContextValue>({
   selectedCounty: '',
   setSelectedCounty: () => {},
-  selectedPeddlerId: '',
-  setSelectedPeddlerId: () => {},
-  selectedPeddler: null,
+  selectedSellerId: '',
+  setSelectedSellerId: () => {},
+  selectedSeller: null,
   counties: [],
-  peddlers: [],
+  sellers: [],
   loading: true,
   clearLocation: () => {},
+
+  geoLocation: null,
+  permissionState: 'prompt',
+  locationPhase: 'idle',
+  locationError: null,
+  nearbySellers: [],
+  nearbyLoading: false,
+  nearbyExpanded: false,
+  detectLocation: () => {},
+  resetLocation: () => {},
 });
 
 export const useLocation = () => useContext(LocationContext);
 
 export const LocationProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedCounty, setSelectedCounty] = useState(() => localStorage.getItem('selectedCounty') || '');
-  const [selectedPeddlerId, setSelectedPeddlerId] = useState(() => localStorage.getItem('selectedPeddlerId') || '');
+  const [selectedSellerId, setSelectedSellerId] = useState(() => localStorage.getItem('selectedSellerId') || '');
   const [counties, setCounties] = useState<string[]>([]);
-  const [peddlers, setPeddlers] = useState<PeddlerInfo[]>([]);
-  const [selectedPeddler, setSelectedPeddler] = useState<PeddlerInfo | null>(null);
+  const [sellers, setSellers] = useState<SellerInfo[]>([]);
+  const [selectedSeller, setSelectedSeller] = useState<SellerInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Load available counties (from profiles with non-empty county)
+  const {
+    location: geoLocation,
+    permissionState,
+    phase: locationPhase,
+    error: locationError,
+    detectLocation,
+    resetLocation: resetGeo,
+  } = useGeolocation();
+
+  const {
+    data: nearbyData,
+    isLoading: nearbyLoading,
+  } = useNearbySellers(
+    geoLocation?.latitude ?? null,
+    geoLocation?.longitude ?? null
+  );
+
+  const nearbyExpanded = nearbyData?.expanded ?? false;
+
+  const [liveSellers, setLiveSellers] = useState<NearbySeller[]>([]);
+
+  useEffect(() => {
+    const data = nearbyData?.sellers ?? [];
+    setLiveSellers((prev) => {
+      if (prev.length === 0 && data.length === 0) return prev;
+      return data;
+    });
+  }, [nearbyData]);
+
+  const nearbySellers = useMemo(() => liveSellers, [liveSellers]);
+
+  const handleSellerUpdate = useCallback((update: { id: string; is_online: boolean }) => {
+    setLiveSellers((prev) =>
+      prev.map((s) =>
+        s.id === update.id ? { ...s, is_online: update.is_online } : s
+      )
+    );
+  }, []);
+
+  useRealtimeSellers(liveSellers, handleSellerUpdate);
+
+  const displaySellers = useMemo(() => {
+    return [...liveSellers].sort((a, b) => {
+      if (a.is_online !== b.is_online) return a.is_online ? -1 : 1;
+      return a.distance_km - b.distance_km;
+    });
+  }, [liveSellers]);
+
   useEffect(() => {
     supabase
-      .from('profiles')
+      .from('sellers')
       .select('county')
       .not('county', 'eq', '')
       .then(({ data, error }) => {
@@ -61,83 +137,96 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
       });
   }, []);
 
-  // Load peddlers in selected county
   useEffect(() => {
     if (!selectedCounty) {
-      setPeddlers([]);
-      setSelectedPeddler(null);
+      setSellers([]);
+      setSelectedSeller(null);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     supabase
-      .from('profiles')
+      .from('sellers')
       .select('id, business_name, whatsapp_number, county, bio')
       .eq('county', selectedCounty)
       .not('business_name', 'eq', '')
       .then(({ data, error }) => {
         if (error) {
-          console.error('Failed to load peddlers:', error);
-          setPeddlers([]);
+          console.error('Failed to load sellers:', error);
+          setSellers([]);
           setLoading(false);
           return;
         }
         if (data) {
-          const mapped: PeddlerInfo[] = data.map(p => ({
+          const mapped: SellerInfo[] = data.map(p => ({
             id: p.id,
             businessName: p.business_name || 'Unknown',
             whatsappNumber: p.whatsapp_number || '254700000000',
             county: p.county || selectedCounty,
             bio: p.bio || '',
           }));
-          setPeddlers(mapped);
+          setSellers(mapped);
         }
         setLoading(false);
       });
   }, [selectedCounty]);
 
-  // Track the selected peddler object
   useEffect(() => {
-    if (selectedPeddlerId && peddlers.length > 0) {
-      const found = peddlers.find(p => p.id === selectedPeddlerId);
-      setSelectedPeddler(found || null);
+    if (selectedSellerId && sellers.length > 0) {
+      const found = sellers.find(p => p.id === selectedSellerId);
+      setSelectedSeller(found || null);
     } else {
-      setSelectedPeddler(null);
+      setSelectedSeller(null);
     }
-  }, [selectedPeddlerId, peddlers]);
+  }, [selectedSellerId, sellers]);
 
-  // Auto-select first peddler if only one
   useEffect(() => {
-    if (peddlers.length === 1 && !selectedPeddlerId) {
-      setSelectedPeddlerId(peddlers[0].id);
+    if (sellers.length === 1 && !selectedSellerId) {
+      setSelectedSellerId(sellers[0].id);
     }
-  }, [peddlers, selectedPeddlerId, setSelectedPeddlerId]);
+  }, [sellers, selectedSellerId, setSelectedSellerId]);
 
-  // Persist to localStorage
   useEffect(() => {
     localStorage.setItem('selectedCounty', selectedCounty);
   }, [selectedCounty]);
 
   useEffect(() => {
-    localStorage.setItem('selectedPeddlerId', selectedPeddlerId);
-  }, [selectedPeddlerId]);
+    localStorage.setItem('selectedSellerId', selectedSellerId);
+  }, [selectedSellerId]);
 
   const clearLocation = useCallback(() => {
     setSelectedCounty('');
-    setSelectedPeddlerId('');
+    setSelectedSellerId('');
     localStorage.removeItem('selectedCounty');
-    localStorage.removeItem('selectedPeddlerId');
+    localStorage.removeItem('selectedSellerId');
   }, []);
 
+  const resetLocation = useCallback(() => {
+    resetGeo();
+    clearLocation();
+  }, [resetGeo, clearLocation]);
+
   return (
-    <LocationContext.Provider value={{
-      selectedCounty, setSelectedCounty,
-      selectedPeddlerId, setSelectedPeddlerId,
-      selectedPeddler,
-      counties, peddlers, loading,
-      clearLocation,
-    }}>
+    <LocationContext.Provider
+      value={{
+        selectedCounty, setSelectedCounty,
+        selectedSellerId, setSelectedSellerId,
+        selectedSeller,
+        counties, sellers, loading,
+        clearLocation,
+
+        geoLocation,
+        permissionState,
+        locationPhase,
+        locationError,
+        nearbySellers: displaySellers,
+        nearbyLoading,
+        nearbyExpanded,
+        detectLocation,
+        resetLocation,
+      }}
+    >
       {children}
     </LocationContext.Provider>
   );

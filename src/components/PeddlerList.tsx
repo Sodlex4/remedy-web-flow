@@ -7,9 +7,9 @@ import { useLocation } from '@/context/LocationContext';
 const PeddlerList = () => {
   const {
     selectedCounty,
-    selectedPeddlerId, setSelectedPeddlerId,
-    peddlers, loading,
-    selectedPeddler, clearLocation,
+    selectedSellerId, setSelectedSellerId,
+    sellers, loading,
+    selectedSeller, clearLocation,
   } = useLocation();
 
   if (!selectedCounty) return null;
@@ -23,7 +23,7 @@ const PeddlerList = () => {
               Dispensaries in {selectedCounty}
             </h2>
             <p className="text-muted-foreground text-sm">
-              {loading ? 'Loading...' : `${peddlers.length} dispensar${peddlers.length === 1 ? 'y' : 'ies'} available`}
+              {loading ? 'Loading...' : `${sellers.length} dispensar${sellers.length === 1 ? 'y' : 'ies'} available`}
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={clearLocation} className="text-muted-foreground">
@@ -36,7 +36,7 @@ const PeddlerList = () => {
             <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
             <p className="text-muted-foreground">Loading dispensaries...</p>
           </div>
-        ) : peddlers.length === 0 ? (
+        ) : sellers.length === 0 ? (
           <Card className="bg-card border-border">
             <CardContent className="py-12 text-center">
               <MapPin size={40} className="mx-auto mb-4 text-muted-foreground" />
@@ -48,11 +48,11 @@ const PeddlerList = () => {
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {peddlers.map(peddler => {
-              const isActive = selectedPeddlerId === peddler.id;
+            {sellers.map(seller => {
+              const isActive = selectedSellerId === seller.id;
               return (
                 <Card
-                  key={peddler.id}
+                  key={seller.id}
                   className={`
                     bg-card border-border cursor-pointer transition-all duration-200
                     ${isActive
@@ -60,7 +60,7 @@ const PeddlerList = () => {
                       : 'hover:border-primary/50 hover:shadow-lg'
                     }
                   `}
-                  onClick={() => setSelectedPeddlerId(peddler.id)}
+                  onClick={() => setSelectedSellerId(seller.id)}
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -69,9 +69,9 @@ const PeddlerList = () => {
                           <Leaf size={24} className="text-primary" />
                         </div>
                         <div>
-                          <CardTitle className="text-lg">{peddler.businessName}</CardTitle>
+                          <CardTitle className="text-lg">{seller.businessName}</CardTitle>
                           <div className="flex items-center text-sm text-muted-foreground mt-1">
-                            <MapPin size={12} className="mr-1" /> {peddler.county}
+                            <MapPin size={12} className="mr-1" /> {seller.county}
                           </div>
                         </div>
                       </div>
@@ -79,11 +79,11 @@ const PeddlerList = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {peddler.bio && (
-                      <p className="text-sm text-muted-foreground mb-3">{peddler.bio}</p>
+                    {seller.bio && (
+                      <p className="text-sm text-muted-foreground mb-3">{seller.bio}</p>
                     )}
                     <a
-                      href={`https://wa.me/${peddler.whatsappNumber}`}
+                      href={`https://wa.me/${seller.whatsappNumber}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center text-sm text-green-500 hover:text-green-400"

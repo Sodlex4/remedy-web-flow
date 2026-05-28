@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MapPin, X } from 'lucide-react';
+import { MapPin, LocateFixed, X } from 'lucide-react';
 import { useLocation } from '@/context/LocationContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +15,7 @@ const KENYAN_COUNTIES = [
 ];
 
 const CountySelector = () => {
-  const { selectedCounty, setSelectedCounty, setSelectedPeddlerId, counties } = useLocation();
+  const { selectedCounty, setSelectedCounty, setSelectedPeddlerId, counties, detectLocation, locationPhase } = useLocation();
   const [dismissed, setDismissed] = useState(false);
   const [hasError, setHasError] = useState(false);
   const navigate = useNavigate();
@@ -32,20 +32,55 @@ const CountySelector = () => {
 
   if (selectedCounty || dismissed) return null;
 
+  if (locationPhase === 'located') return null;
+
   const handleSelect = (county: string) => {
     setSelectedCounty(county);
     setSelectedPeddlerId('');
   };
 
-  // Merge available counties from DB with full list — highlight ones that have peddlers
-  const availableCounties = KENYAN_COUNTIES;
+  const handleDetectLocation = () => {
+    detectLocation();
+  };
+
+  const isDetecting = locationPhase === 'detecting';
 
   return (
-    <section className="py-12 bg-card/30 border-y border-border">
+    <section id="county-selector" className="py-12 bg-card/30 border-y border-border">
       <div className="container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center mb-8">
           <h2 className="text-3xl font-bold text-foreground mb-2">Where are you located?</h2>
           <p className="text-muted-foreground">Select your county to find a licensed dispensary near you</p>
+        </div>
+
+        <div className="max-w-md mx-auto mb-8">
+          <Button
+            onClick={handleDetectLocation}
+            variant="default"
+            className="w-full h-12 text-base"
+            disabled={isDetecting}
+          >
+            {isDetecting ? (
+              <>
+                <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                Detecting location...
+              </>
+            ) : (
+              <>
+                <LocateFixed size={18} className="mr-2" />
+                Use my current location
+              </>
+            )}
+          </Button>
+        </div>
+
+        <div className="relative mb-8">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card/30 px-4 text-muted-foreground">Or select a county</span>
+          </div>
         </div>
 
         {counties.length === 0 ? (
@@ -61,7 +96,7 @@ const CountySelector = () => {
           </div>
         ) : (
           <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
-            {availableCounties.map(county => {
+            {KENYAN_COUNTIES.map(county => {
               const hasPeddler = counties.includes(county);
               return (
                 <Button

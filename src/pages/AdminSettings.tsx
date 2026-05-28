@@ -13,7 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useBusiness } from '@/context/BusinessContext';
 import type { ContentSettings } from '@/context/BusinessContext';
 import { toast } from 'sonner';
-import { User, Bell, Palette, Users, Save, Leaf, Moon, Sun, Volume2, VolumeX, Calendar, Shield, FileText } from 'lucide-react';
+import { User, Bell, Palette, Users, Save, Leaf, Moon, Sun, Volume2, VolumeX, Calendar, Shield, FileText, MapPin, Wifi } from 'lucide-react';
 
 const DEFAULT_SETTINGS: ContentSettings = {
   tagline: "Don't Panic, It's Organic",
@@ -41,7 +41,9 @@ const AdminSettings = () => {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileData, setProfileData] = useState({
     name: '', email: '', businessName: '', whatsappNumber: '', county: '', bio: '',
-    currentPassword: '', newPassword: '', confirmPassword: ''
+    currentPassword: '', newPassword: '', confirmPassword: '',
+    latitude: '' as string, longitude: '' as string,
+    deliveryRadius: 20, isOnline: true,
   });
 
   const [content, setContent] = useState<ContentSettings>(DEFAULT_SETTINGS);
@@ -59,18 +61,23 @@ const AdminSettings = () => {
 
   const loadProfile = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from('profiles')
-      .select('name, business_name, whatsapp_number, county, bio, role, settings')
-      .eq('id', user.id)
-      .single();
-    if (data) {
+    const [profileRes, sellerRes] = await Promise.all([
+      supabase.from('profiles').select('name, role').eq('id', user.id).single(),
+      supabase.from('sellers').select('*').eq('id', user.id).single(),
+    ]);
+    const profileData = profileRes.data;
+    const sellerData = sellerRes.data;
+    if (profileData) {
       setProfileData(prev => ({
-        ...prev, name: data.name || '', email: user.email || '',
-        businessName: data.business_name || '', whatsappNumber: data.whatsapp_number || '',
-        county: data.county || '', bio: data.bio || '',
+        ...prev, name: profileData.name || '', email: user.email || '',
+        businessName: sellerData?.business_name || '', whatsappNumber: sellerData?.whatsapp_number || '',
+        county: sellerData?.county || '', bio: sellerData?.bio || '',
+        latitude: sellerData?.latitude != null ? String(sellerData.latitude) : '',
+        longitude: sellerData?.longitude != null ? String(sellerData.longitude) : '',
+        deliveryRadius: sellerData?.delivery_radius_km ?? 20,
+        isOnline: sellerData?.is_online ?? true,
       }));
-      const saved = data.settings as Record<string, unknown> | null;
+      const saved = sellerData?.settings as Record<string, unknown> | null;
       if (saved && Object.keys(saved).length > 0) {
         setContent(prev => ({
           ...prev,
@@ -100,18 +107,30 @@ const AdminSettings = () => {
       const { error: pwError } = await supabase.auth.updateUser({ password: profileData.newPassword });
       if (pwError) { toast.error('Failed to update password'); return; }
     }
-    const { error } = await supabase.from('profiles').update({
-      name: profileData.name, business_name: profileData.businessName,
-      whatsapp_number: profileData.whatsappNumber, county: profileData.county, bio: profileData.bio,
+    const lat = profileData.latitude ? parseFloat(profileData.latitude) : null;
+    const lng = profileData.longitude ? parseFloat(profileData.longitude) : null;
+    const { error: profileError } = await supabase.from('profiles').update({
+      name: profileData.name,
     }).eq('id', user.id);
-    if (error) { toast.error('Failed to save profile'); return; }
+    if (profileError) { toast.error('Failed to save profile'); return; }
+    const { error: sellerError } = await supabase.from('sellers').update({
+      business_name: profileData.businessName,
+      whatsapp_number: profileData.whatsappNumber,
+      county: profileData.county,
+      bio: profileData.bio,
+      latitude: lat,
+      longitude: lng,
+      delivery_radius_km: profileData.deliveryRadius,
+      is_online: profileData.isOnline,
+    }).eq('id', user.id);
+    if (sellerError) { toast.error('Failed to save business info'); return; }
     toast.success('Profile updated successfully');
     setProfileData(prev => ({ ...prev, currentPassword: '', newPassword: '', confirmPassword: '' }));
   };
 
   const handleSaveContent = async () => {
     if (!user) { toast.error('Not authenticated'); return; }
-    const { error } = await supabase.from('profiles').update({ settings: content }).eq('id', user.id);
+    const { error } = await supabase.from('sellers').update({ settings: content }).eq('id', user.id);
     if (error) { toast.error('Failed to save content'); return; }
     toast.success('Content updated successfully');
     setContentDirty(false);
@@ -202,6 +221,53 @@ const AdminSettings = () => {
                     <div className="space-y-2"><Label>County</Label><Input value={profileData.county} onChange={e => setProfileData(p => ({ ...p, county: e.target.value }))} /></div>
                   </div>
                   <div className="space-y-2"><Label>Bio</Label><Textarea value={profileData.bio} onChange={e => setProfileData(p => ({ ...p, bio: e.target.value }))} rows={3} /></div>
+
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <MapPin size={18} className="text-primary" />
+                      Store Location
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Latitude</Label>
+                        <Input
+                          value={profileData.latitude}
+                          onChange={e => setProfileData(p => ({ ...p, latitude: e.target.value }))}
+                          placeholder="-1.2921"
+                          type="number" step="any"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Longitude</Label>
+                        <Input
+                          value={profileData.longitude}
+                          onChange={e => setProfileData(p => ({ ...p, longitude: e.target.value }))}
+                          placeholder="36.8219"
+                          type="number" step="any"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <div className="space-y-2">
+                        <Label>Delivery Radius (km)</Label>
+                        <Input
+                          value={profileData.deliveryRadius}
+                          onChange={e => setProfileData(p => ({ ...p, deliveryRadius: parseInt(e.target.value) || 0 }))}
+                          type="number" min="1" max="100"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-6">
+                    <SwitchRow
+                      label={profileData.isOnline ? 'Online — Accepting orders' : 'Offline — Not accepting orders'}
+                      description="Toggle your storefront availability. When offline, you won't appear in nearby seller searches."
+                      checked={profileData.isOnline}
+                      onChange={c => setProfileData(p => ({ ...p, isOnline: c }))}
+                    />
+                  </div>
+
                   <Button onClick={handleSaveProfile}><Save className="mr-2" size={16} />Save Business Info</Button>
                 </>}
               </CardContent>

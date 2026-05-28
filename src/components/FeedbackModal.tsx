@@ -14,8 +14,10 @@ import {
 import { Star, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { useLocation } from '@/context/LocationContext';
 
 const FeedbackModal = () => {
+  const { selectedSeller } = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -38,6 +40,7 @@ const FeedbackModal = () => {
         rating,
         message: feedback,
         email: email || null,
+        seller_id: selectedSeller?.id || null,
       }]);
 
       if (error) {

@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 const ContactSection = () => {
   const { county, whatsappNumber, email: businessEmail, content } = useBusiness();
-  const { selectedPeddler } = useLocation();
+  const { selectedSeller } = useLocation();
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,7 +31,7 @@ const ContactSection = () => {
       email: formData.email,
       subject: formData.subject,
       message: formData.message,
-      peddler_id: selectedPeddler?.id || null,
+      seller_id: selectedSeller?.id || null,
     }]);
 
     setIsSubmitting(false);

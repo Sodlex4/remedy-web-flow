@@ -9,7 +9,7 @@ export interface PickupRequest {
   status: 'new' | 'seen' | 'ready' | 'completed';
   createdAt: string;
   totalAmount: number;
-  peddlerId?: string;
+  sellerId?: string;
   county?: string;
   isGoogleSynced?: boolean;
   lastSynced?: string;
@@ -34,14 +34,14 @@ export interface SupabasePickupRequest {
   status: 'new' | 'seen' | 'ready' | 'completed';
   created_at: string;
   total_amount: number;
-  peddler_id?: string;
+  seller_id?: string;
   county?: string;
 }
 
 // Database strain type (per-peddler)
 export interface DbStrain {
   id: string;
-  peddler_id: string;
+  seller_id: string;
   name: string;
   type: 'Indica' | 'Sativa' | 'Hybrid' | 'Edibles' | 'Accessories';
   thc?: string;
@@ -55,16 +55,12 @@ export interface DbStrain {
   updated_at: string;
 }
 
-// Database profile type (includes peddler fields)
+// Database profile type (linked to auth.users, no business fields)
 export interface DbProfile {
   id: string;
   name: string;
   role: 'admin' | 'assistant' | 'viewer';
-  business_name?: string;
-  whatsapp_number?: string;
-  county?: string;
-  bio?: string;
-  avatar_url?: string;
+  seller_id?: string;
   created_at: string;
   updated_at: string;
 }

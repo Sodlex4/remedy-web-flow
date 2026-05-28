@@ -77,7 +77,7 @@ const AdminDashboard = () => {
       status: supabaseRequest.status,
       createdAt: supabaseRequest.created_at,
       totalAmount: supabaseRequest.total_amount,
-      peddlerId: supabaseRequest.peddler_id,
+      sellerId: supabaseRequest.seller_id,
       county: supabaseRequest.county
     };
   };
@@ -181,7 +181,7 @@ const AdminDashboard = () => {
 
   // Load counties for filter
   useEffect(() => {
-    supabase.from('profiles').select('county').not('county', 'eq', '').then(({ data }) => {
+    supabase.from('sellers').select('county').not('county', 'eq', '').then(({ data }) => {
       if (data) {
         const unique = [...new Set(data.map(p => p.county).filter(Boolean))].sort() as string[];
         setCounties(unique);

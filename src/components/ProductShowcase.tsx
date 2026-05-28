@@ -13,7 +13,7 @@ interface StrainItem {
 }
 
 const ProductShowcase = () => {
-  const { selectedPeddlerId } = useLocation();
+  const { selectedSellerId } = useLocation();
   const [strains, setStrains] = useState<StrainItem[]>([]);
   const navigate = useNavigate();
 
@@ -25,8 +25,8 @@ const ProductShowcase = () => {
       .limit(4)
       .order('name');
 
-    if (selectedPeddlerId) {
-      query.eq('peddler_id', selectedPeddlerId);
+    if (selectedSellerId) {
+      query.eq('seller_id', selectedSellerId);
     }
 
     query.then(({ data, error }) => {
@@ -38,7 +38,7 @@ const ProductShowcase = () => {
         setStrains(data);
       }
     });
-  }, [selectedPeddlerId]);
+  }, [selectedSellerId]);
 
   const getTypeColor = (type: string) => {
     switch (type) {

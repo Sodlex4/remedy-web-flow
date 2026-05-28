@@ -21,7 +21,7 @@ interface StrainItem {
 }
 
 const StrainSearch = () => {
-  const { selectedPeddler } = useLocation();
+  const { selectedSeller } = useLocation();
   const [strains, setStrains] = useState<StrainItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
@@ -39,8 +39,8 @@ const StrainSearch = () => {
       .eq('available', true)
       .order('name');
 
-    if (selectedPeddler?.id) {
-      query.eq('peddler_id', selectedPeddler.id);
+    if (selectedSeller?.id) {
+      query.eq('seller_id', selectedSeller.id);
     }
 
     query.then(({ data, error }) => {
@@ -64,7 +64,7 @@ const StrainSearch = () => {
         })));
       }
     });
-  }, [selectedPeddler?.id]);
+  }, [selectedSeller?.id]);
 
   const filteredStrains = strains.filter(strain => {
     const matchesSearch = strain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -108,7 +108,7 @@ const StrainSearch = () => {
             </Link>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Strain Explorer</h1>
-              <p className="text-muted-foreground">{selectedPeddler ? `Products from ${selectedPeddler.businessName}` : 'Discover premium cannabis products'}</p>
+              <p className="text-muted-foreground">{selectedSeller ? `Products from ${selectedSeller.businessName}` : 'Discover premium cannabis products'}</p>
             </div>
           </div>
 

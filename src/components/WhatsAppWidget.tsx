@@ -8,15 +8,15 @@ import { useLocation } from '@/context/LocationContext';
 
 const WhatsAppWidget = () => {
   const { businessName: defaultName, whatsappNumber: defaultPhone } = useBusiness();
-  const { selectedPeddler } = useLocation();
+  const { selectedSeller } = useLocation();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSearchPage, setIsSearchPage] = useState(false);
   const [selectedStrain, setSelectedStrain] = useState<string>('');
   const [showStrainSelector, setShowStrainSelector] = useState(false);
   const [strainNames, setStrainNames] = useState<string[]>([]);
 
-  const businessName = selectedPeddler?.businessName || defaultName;
-  const whatsappNumber = selectedPeddler?.whatsappNumber || defaultPhone;
+  const businessName = selectedSeller?.businessName || defaultName;
+  const whatsappNumber = selectedSeller?.whatsappNumber || defaultPhone;
 
   useEffect(() => {
     setIsSearchPage(window.location.pathname === '/search' || window.location.pathname.startsWith('/admin'));
@@ -29,8 +29,8 @@ const WhatsAppWidget = () => {
       .eq('available', true)
       .order('name');
 
-    if (selectedPeddler?.id) {
-      query.eq('peddler_id', selectedPeddler.id);
+    if (selectedSeller?.id) {
+      query.eq('seller_id', selectedSeller.id);
     }
 
     query.then(({ data, error }) => {
@@ -40,7 +40,7 @@ const WhatsAppWidget = () => {
       }
       if (data) setStrainNames(data.map(s => s.name));
     });
-  }, [selectedPeddler?.id]);
+  }, [selectedSeller?.id]);
 
   const handleWhatsAppClick = (customMessage?: string) => {
     const baseMessage = customMessage || `Hello ${businessName} 🌿 — I'd like to request a pickup${selectedStrain ? ` for ${selectedStrain}` : ''}. Please assist with discreet delivery.`;

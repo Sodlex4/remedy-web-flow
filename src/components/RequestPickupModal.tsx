@@ -28,7 +28,7 @@ interface RequestPickupModalProps {
 
 const RequestPickupModal = ({ isOpen, onClose, selectedStrains, onRemoveStrain }: RequestPickupModalProps) => {
   const { businessName } = useBusiness();
-  const { selectedPeddler } = useLocation();
+  const { selectedSeller } = useLocation();
   const [formData, setFormData] = useState({
     fullName: '',
     whatsappNumber: '',
@@ -75,7 +75,7 @@ Total: KSh ${totalPrice.toLocaleString()}
     
     // Redirect to WhatsApp after a short delay
     setTimeout(() => {
-      const whatsappNumber = selectedPeddler?.whatsappNumber || '254700000000';
+      const whatsappNumber = selectedSeller?.whatsappNumber || '254700000000';
       const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
       onClose();

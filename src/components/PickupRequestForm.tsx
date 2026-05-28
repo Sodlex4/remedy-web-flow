@@ -16,7 +16,7 @@ interface StrainItem {
 
 const PickupRequestForm = () => {
   const { businessName } = useBusiness();
-  const { selectedCounty, selectedPeddlerId, selectedPeddler } = useLocation();
+  const { selectedCounty, selectedSellerId, selectedSeller } = useLocation();
   const [strains, setStrains] = useState<StrainItem[]>([]);
   const [formData, setFormData] = useState({
     customerName: '',
@@ -27,7 +27,7 @@ const PickupRequestForm = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const targetPeddlerId = selectedPeddlerId || '00000000-0000-0000-0000-000000000000';
+  const targetSellerId = selectedSellerId || '00000000-0000-0000-0000-000000000000';
   const targetCounty = selectedCounty || '';
 
   useEffect(() => {
@@ -37,8 +37,8 @@ const PickupRequestForm = () => {
       .eq('available', true)
       .order('name');
 
-    if (selectedPeddlerId) {
-      query.eq('peddler_id', selectedPeddlerId);
+    if (selectedSellerId) {
+      query.eq('seller_id', selectedSellerId);
     }
 
     query.then(({ data, error }) => {
@@ -48,7 +48,7 @@ const PickupRequestForm = () => {
       }
       if (data) setStrains(data);
     });
-  }, [selectedPeddlerId]);
+  }, [selectedSellerId]);
 
   const getStrainPrice = (name: string): number => {
     return strains.find(s => s.name === name)?.price ?? 0;
@@ -82,7 +82,7 @@ const PickupRequestForm = () => {
           pickup_time: formData.pickupTime,
           status: 'new',
           total_amount: formData.quantity * getStrainPrice(formData.strain),
-          peddler_id: targetPeddlerId,
+          seller_id: targetSellerId,
           county: targetCounty,
         }]);
 
@@ -105,8 +105,8 @@ const PickupRequestForm = () => {
     }
   };
 
-  const heading = selectedPeddler
-    ? `Request Pickup — ${selectedPeddler.businessName}`
+  const heading = selectedSeller
+    ? `Request Pickup — ${selectedSeller.businessName}`
     : `Request Pickup — ${businessName}`;
 
   return (

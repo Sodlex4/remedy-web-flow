@@ -38,7 +38,7 @@ const StrainManager = () => {
     const { data } = await supabase
       .from('strains')
       .select('*')
-      .eq('peddler_id', user.id)
+      .eq('seller_id', user.id)
       .order('name');
     if (data) setStrains(data);
     setLoading(false);
@@ -58,7 +58,7 @@ const StrainManager = () => {
     if (!form.price) { toast.error('Price is required'); return; }
 
     const payload = {
-      peddler_id: user.id,
+      seller_id: user.id,
       name: form.name,
       type: form.type,
       thc: form.thc || null,
