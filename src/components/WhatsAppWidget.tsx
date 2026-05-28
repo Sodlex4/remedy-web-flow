@@ -33,7 +33,11 @@ const WhatsAppWidget = () => {
       query.eq('peddler_id', selectedPeddler.id);
     }
 
-    query.then(({ data }) => {
+    query.then(({ data, error }) => {
+      if (error) {
+        console.error('Failed to load strain names:', error);
+        return;
+      }
       if (data) setStrainNames(data.map(s => s.name));
     });
   }, [selectedPeddler?.id]);

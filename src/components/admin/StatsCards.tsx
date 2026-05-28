@@ -10,6 +10,7 @@ import {
 interface StatsCardsProps {
   newRequestsCount: number;
   totalRequests: number;
+  confirmedCount: number;
   completedCount: number;
   totalValue: number;
 }
@@ -17,6 +18,7 @@ interface StatsCardsProps {
 const StatsCards = ({
   newRequestsCount,
   totalRequests,
+  confirmedCount,
   completedCount,
   totalValue
 }: StatsCardsProps) => {
@@ -55,7 +57,7 @@ const StatsCards = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-muted-foreground dark:text-muted-foreground text-sm">Ready for Pickup</p>
-              <p className="text-3xl font-bold text-foreground dark:text-foreground">{completedCount}</p>
+              <p className="text-3xl font-bold text-foreground dark:text-foreground">{confirmedCount}</p>
             </div>
             <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center">
               <CheckCircle className="text-green-500" size={24} />

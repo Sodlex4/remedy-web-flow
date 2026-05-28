@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { X, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBusiness } from '@/context/BusinessContext';
+import { useLocation } from '@/context/LocationContext';
 
 interface Strain {
   id: string;
@@ -27,6 +28,7 @@ interface RequestPickupModalProps {
 
 const RequestPickupModal = ({ isOpen, onClose, selectedStrains, onRemoveStrain }: RequestPickupModalProps) => {
   const { businessName } = useBusiness();
+  const { selectedPeddler } = useLocation();
   const [formData, setFormData] = useState({
     fullName: '',
     whatsappNumber: '',
@@ -68,7 +70,8 @@ Total: KSh ${totalPrice.toLocaleString()}
     
     // Redirect to WhatsApp after a short delay
     setTimeout(() => {
-      const whatsappUrl = `https://wa.me/254700000000?text=${encodeURIComponent(message)}`;
+      const whatsappNumber = selectedPeddler?.whatsappNumber || '254700000000';
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
       onClose();
       

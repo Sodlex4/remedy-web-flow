@@ -27,6 +27,7 @@ const StrainSearch = () => {
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [selectedStrains, setSelectedStrains] = useState<StrainItem[]>([]);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [strainError, setStrainError] = useState<string | null>(null);
 
   const filters = ['All', 'Indica', 'Sativa', 'Hybrid', 'Edibles', 'Accessories'];
 
@@ -41,7 +42,13 @@ const StrainSearch = () => {
       query.eq('peddler_id', selectedPeddler.id);
     }
 
-    query.then(({ data }) => {
+    query.then(({ data, error }) => {
+      if (error) {
+        console.error('Failed to load strains:', error);
+        setStrainError('Failed to load products. Please try again later.');
+        return;
+      }
+      setStrainError(null);
       if (data) {
         setStrains(data.map(s => ({
           id: s.id,
@@ -163,7 +170,17 @@ const StrainSearch = () => {
           ))}
         </div>
 
-        {filteredStrains.length === 0 && (
+        {strainError && (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 mx-auto mb-4 bg-destructive/10 rounded-full flex items-center justify-center">
+              <Search size={32} className="text-destructive" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">Something went wrong</h3>
+            <p className="text-muted-foreground">{strainError}</p>
+          </div>
+        )}
+
+        {!strainError && filteredStrains.length === 0 && (
           <div className="text-center py-12">
             <div className="w-24 h-24 mx-auto mb-4 bg-muted/20 rounded-full flex items-center justify-center">
               <Search size={32} className="text-muted-foreground" />

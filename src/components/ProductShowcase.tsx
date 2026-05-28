@@ -27,7 +27,11 @@ const ProductShowcase = () => {
       query.eq('peddler_id', selectedPeddlerId);
     }
 
-    query.then(({ data }) => {
+    query.then(({ data, error }) => {
+      if (error) {
+        console.error('Failed to load strains:', error);
+        return;
+      }
       if (data && data.length > 0) {
         setStrains(data);
       }

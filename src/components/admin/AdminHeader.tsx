@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import NotificationDropdown from '@/components/NotificationDropdown';
 import { PickupRequest } from '@/types/pickupRequest';
+import { useAuth } from '@/context/AuthContext';
 
 interface AdminHeaderProps {
   isSidebarOpen: boolean;
@@ -40,6 +41,8 @@ const AdminHeader = ({
   onMarkAllSeen,
   onNotificationClick
 }: AdminHeaderProps) => {
+  const { user } = useAuth();
+  const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin';
   return (
     <header className="sticky top-0 z-30 bg-card/95 dark:bg-card/95 backdrop-blur-sm border-b border-border dark:border-border">
       <div className="flex items-center justify-between p-4 lg:p-6">
@@ -54,7 +57,7 @@ const AdminHeader = ({
           </Button>
           <div>
             <h1 className="text-xl lg:text-2xl font-bold text-foreground dark:text-foreground">
-              Welcome Chizoh 👑
+              Welcome {displayName} 👑
             </h1>
             <p className="text-sm text-muted-foreground hidden sm:block">
               {loading ? 'Loading live data...' : 'Connected to live Supabase data with real-time notifications'}

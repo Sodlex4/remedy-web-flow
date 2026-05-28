@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, ShieldAlert } from 'lucide-react';
 
 interface AgeVerificationModalProps {
   isOpen: boolean;
@@ -9,7 +9,39 @@ interface AgeVerificationModalProps {
 }
 
 const AgeVerificationModal = ({ isOpen, onClose }: AgeVerificationModalProps) => {
+  const [showUnderage, setShowUnderage] = useState(false);
+
   if (!isOpen) return null;
+
+  if (showUnderage) {
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="bg-card border border-border rounded-lg p-8 max-w-md w-full text-center relative">
+          <ShieldAlert className="mx-auto mb-4 text-destructive" size={48} />
+          <h2 className="text-2xl font-bold mb-4 text-destructive">Access Restricted</h2>
+          <p className="text-muted-foreground mb-6">
+            You must be 21 years or older to access this website. We take age verification seriously and
+            cannot grant you entry at this time.
+          </p>
+          <p className="text-muted-foreground mb-6">
+            Please come back when you are of legal age.
+          </p>
+          <div className="space-y-3">
+            <Button
+              onClick={() => setShowUnderage(false)}
+              variant="outline"
+              className="w-full border-border hover:bg-muted"
+            >
+              Go Back
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-4">
+            If you believe you are seeing this in error, please contact our support team.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
@@ -37,7 +69,7 @@ const AgeVerificationModal = ({ isOpen, onClose }: AgeVerificationModalProps) =>
           
           <Button 
             variant="outline" 
-            onClick={() => window.location.href = 'https://google.com'}
+            onClick={() => setShowUnderage(true)}
             className="w-full border-border hover:bg-muted"
           >
             I am under 21 - Exit

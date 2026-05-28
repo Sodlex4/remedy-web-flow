@@ -41,7 +41,11 @@ const PickupRequestForm = () => {
       query.eq('peddler_id', selectedPeddlerId);
     }
 
-    query.then(({ data }) => {
+    query.then(({ data, error }) => {
+      if (error) {
+        console.error('Failed to load strains for form:', error);
+        return;
+      }
       if (data) setStrains(data);
     });
   }, [selectedPeddlerId]);
@@ -126,7 +130,14 @@ const PickupRequestForm = () => {
           </div>
           <div>
             <Label htmlFor="quantity">Quantity (grams)</Label>
-            <Input id="quantity" type="number" min="1" value={formData.quantity} onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })} />
+            <Input id="quantity" type="number" min="1" value={formData.quantity} onChange={e => {
+              const val = parseInt(e.target.value);
+              if (val < 1 && e.target.value !== '') {
+                toast.error('Quantity must be at least 1 gram');
+                return;
+              }
+              setFormData({ ...formData, quantity: val || 1 });
+            }} />
           </div>
           <div>
             <Label htmlFor="pickupTime">Preferred Pickup Time</Label>

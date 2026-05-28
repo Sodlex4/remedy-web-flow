@@ -49,7 +49,11 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
       .from('profiles')
       .select('county')
       .not('county', 'eq', '')
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to load counties:', error);
+          return;
+        }
         if (data) {
           const unique = [...new Set(data.map(p => p.county).filter(Boolean))].sort() as string[];
           setCounties(unique);
@@ -72,7 +76,13 @@ export const LocationProvider = ({ children }: { children: React.ReactNode }) =>
       .select('id, business_name, whatsapp_number, county, bio')
       .eq('county', selectedCounty)
       .not('business_name', 'eq', '')
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to load peddlers:', error);
+          setPeddlers([]);
+          setLoading(false);
+          return;
+        }
         if (data) {
           const mapped: PeddlerInfo[] = data.map(p => ({
             id: p.id,

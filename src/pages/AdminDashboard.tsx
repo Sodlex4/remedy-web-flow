@@ -337,9 +337,9 @@ const AdminDashboard = () => {
   // Calculate stats from real data
   const newRequestsCount = pickupRequests.filter(req => req.status === 'new').length;
   const thisWeekPickups = pickupRequests.length;
-  const pendingCount = pickupRequests.filter(req => req.status === 'new').length;
-  const confirmedCount = pickupRequests.filter(req => req.status === 'seen').length;
-  const completedCount = pickupRequests.filter(req => req.status === 'ready' || req.status === 'completed').length;
+  const pendingCount = pickupRequests.filter(req => req.status === 'seen').length;
+  const confirmedCount = pickupRequests.filter(req => req.status === 'ready').length;
+  const completedCount = pickupRequests.filter(req => req.status === 'completed').length;
   const totalValue = pickupRequests.reduce((sum, req) => sum + req.totalAmount, 0);
 
   return (
@@ -405,6 +405,7 @@ const AdminDashboard = () => {
           <StatsCards
             newRequestsCount={newRequestsCount}
             totalRequests={pickupRequests.length}
+            confirmedCount={confirmedCount}
             completedCount={completedCount}
             totalValue={totalValue}
           />

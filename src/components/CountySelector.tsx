@@ -16,6 +16,17 @@ const KENYAN_COUNTIES = [
 const CountySelector = () => {
   const { selectedCounty, setSelectedCounty, setSelectedPeddlerId, counties } = useLocation();
   const [dismissed, setDismissed] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (counties.length === 0) {
+      const timer = setTimeout(() => {
+        if (counties.length === 0) setHasError(true);
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+    setHasError(false);
+  }, [counties]);
 
   if (selectedCounty || dismissed) return null;
 
@@ -35,35 +46,42 @@ const CountySelector = () => {
           <p className="text-muted-foreground">Select your county to find a licensed dispensary near you</p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
-          {availableCounties.map(county => {
-            const hasPeddler = counties.includes(county);
-            return (
-              <Button
-                key={county}
-                variant={hasPeddler ? "default" : "outline"}
-                size="sm"
-                onClick={() => hasPeddler && handleSelect(county)}
-                disabled={!hasPeddler}
-                className={`
-                  ${hasPeddler
-                    ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
-                    : 'border-border text-muted-foreground opacity-50 cursor-not-allowed'
-                  }
-                  transition-all duration-200
-                `}
-              >
-                <MapPin size={14} className="mr-1" />
-                {county}
-              </Button>
-            );
-          })}
-        </div>
-
-        {counties.length === 0 && (
-          <p className="text-center text-muted-foreground text-sm mt-6">
-            Loading available counties...
-          </p>
+        {counties.length === 0 ? (
+          <div className="text-center py-8">
+            {hasError ? (
+              <div className="space-y-4">
+                <p className="text-destructive font-medium">Unable to load available counties</p>
+                <p className="text-muted-foreground text-sm">Please check your connection and try again</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-sm">Loading available counties...</p>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+            {availableCounties.map(county => {
+              const hasPeddler = counties.includes(county);
+              return (
+                <Button
+                  key={county}
+                  variant={hasPeddler ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => hasPeddler && handleSelect(county)}
+                  disabled={!hasPeddler}
+                  className={`
+                    ${hasPeddler
+                      ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                      : 'border-border text-muted-foreground opacity-50 cursor-not-allowed'
+                    }
+                    transition-all duration-200
+                  `}
+                >
+                  <MapPin size={14} className="mr-1" />
+                  {county}
+                </Button>
+              );
+            })}
+          </div>
         )}
 
         <div className="text-center mt-4">
