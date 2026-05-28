@@ -164,7 +164,7 @@ const PickupCalendar = () => {
   const weeklyStats = getWeeklyStats();
   const uniqueStrains = [...new Set(pickupRequests.map(req => req.strain).filter(Boolean))];
 
-  const exportToCalendar = (request: PickupRequest) => {
+  const exportToCalendar = (request: LocalPickupRequest) => {
     const startDate = new Date(request.scheduledDate + 'T' + (
       request.pickupTime === 'morning' ? '09:00:00' :
       request.pickupTime === 'afternoon' ? '14:00:00' : '18:00:00'

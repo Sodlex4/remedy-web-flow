@@ -10,6 +10,7 @@ import {
   Phone, 
   Clock, 
   Package, 
+  Calendar,
   Eye,
   CheckCircle,
   MessageCircle
