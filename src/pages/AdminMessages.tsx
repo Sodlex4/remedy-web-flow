@@ -11,7 +11,8 @@ import {
   User,
   Mail,
   Phone,
-  Loader2
+  Loader2,
+  Circle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ interface ContactMessage {
   subject: string;
   message: string;
   source: string;
+  is_read: boolean;
   created_at: string;
 }
 
@@ -33,6 +35,26 @@ const AdminMessages = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [reply, setReply] = useState('');
   const [loading, setLoading] = useState(true);
+  const [readLoading, setReadLoading] = useState<string | null>(null);
+
+  const handleSelectMessage = async (message: ContactMessage) => {
+    setSelectedMessage(message);
+    if (!message.is_read) {
+      setReadLoading(message.id);
+      const { error } = await supabase
+        .from('contact_messages')
+        .update({ is_read: true })
+        .eq('id', message.id);
+      if (error) {
+        console.error('Failed to mark message as read:', error);
+      } else {
+        setMessages(prev =>
+          prev.map(m => m.id === message.id ? { ...m, is_read: true } : m)
+        );
+      }
+      setReadLoading(null);
+    }
+  };
 
   useEffect(() => {
     supabase
@@ -112,16 +134,24 @@ const AdminMessages = () => {
                       {filteredMessages.map((message) => (
                         <div
                           key={message.id}
-                          onClick={() => setSelectedMessage(message)}
+                          onClick={() => handleSelectMessage(message)}
                           className={`p-4 cursor-pointer border-b border-border hover:bg-muted/50 transition-colors ${
                             selectedMessage?.id === message.id ? 'bg-muted' : ''
                           }`}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
-                              <p className={`font-medium truncate ${selectedMessage?.id === message.id ? 'text-foreground' : 'text-muted-foreground'}`}>
-                                {message.name}
-                              </p>
+                              <div className="flex items-center space-x-2">
+                                {!message.is_read && (
+                                  <Circle size={8} className="fill-primary text-primary flex-shrink-0" />
+                                )}
+                                {readLoading === message.id && (
+                                  <Loader2 size={12} className="animate-spin text-muted-foreground flex-shrink-0" />
+                                )}
+                                <p className={`font-medium truncate ${selectedMessage?.id === message.id ? 'text-foreground' : 'text-muted-foreground'}`}>
+                                  {message.name}
+                                </p>
+                              </div>
                               <p className="text-sm text-muted-foreground truncate mt-1">
                                 {message.subject}
                               </p>
