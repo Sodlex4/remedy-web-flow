@@ -4,32 +4,48 @@
 -- contact_messages
 -- ============================================================
 
--- Allow authenticated users to update contact messages (mark as read, etc.)
-CREATE POLICY "Authenticated users can update contact messages"
+-- Allow admin/assistant only to update contact messages (mark as read, etc.)
+DROP POLICY IF EXISTS "Authenticated users can update contact messages" ON contact_messages;
+CREATE POLICY "Admins can update contact messages"
   ON contact_messages FOR UPDATE
   TO authenticated
-  USING (true)
-  WITH CHECK (true);
+  USING (
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
+  )
+  WITH CHECK (
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
+  );
 
--- Allow authenticated users to delete contact messages
-CREATE POLICY "Authenticated users can delete contact messages"
+-- Allow admin/assistant only to delete contact messages
+DROP POLICY IF EXISTS "Authenticated users can delete contact messages" ON contact_messages;
+CREATE POLICY "Admins can delete contact messages"
   ON contact_messages FOR DELETE
   TO authenticated
-  USING (true);
+  USING (
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
+  );
 
 -- ============================================================
 -- feedback
 -- ============================================================
 
--- Allow authenticated users to update feedback
-CREATE POLICY "Authenticated users can update feedback"
+-- Allow admin/assistant only to update feedback
+DROP POLICY IF EXISTS "Authenticated users can update feedback" ON feedback;
+CREATE POLICY "Admins can update feedback"
   ON feedback FOR UPDATE
   TO authenticated
-  USING (true)
-  WITH CHECK (true);
+  USING (
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
+  )
+  WITH CHECK (
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
+  );
 
--- Allow authenticated users to delete feedback
-CREATE POLICY "Authenticated users can delete feedback"
+-- Allow admin/assistant only to delete feedback
+DROP POLICY IF EXISTS "Authenticated users can delete feedback" ON feedback;
+CREATE POLICY "Admins can delete feedback"
   ON feedback FOR DELETE
   TO authenticated
-  USING (true);
+  USING (
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
+  );

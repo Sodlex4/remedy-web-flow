@@ -44,7 +44,7 @@ CREATE POLICY "Peddlers can view own pickup requests"
   TO authenticated
   USING (
     peddler_id = auth.uid() OR
-    auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin')
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
   );
 
 CREATE POLICY "Peddlers can update own pickup requests"
@@ -52,11 +52,11 @@ CREATE POLICY "Peddlers can update own pickup requests"
   TO authenticated
   USING (
     peddler_id = auth.uid() OR
-    auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin')
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
   )
   WITH CHECK (
     peddler_id = auth.uid() OR
-    auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin')
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
   );
 
 CREATE POLICY "Peddlers can delete own pickup requests"
@@ -64,7 +64,7 @@ CREATE POLICY "Peddlers can delete own pickup requests"
   TO authenticated
   USING (
     peddler_id = auth.uid() OR
-    auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin')
+    auth.uid() IN (SELECT id FROM profiles WHERE role IN ('admin', 'assistant'))
   );
 
 -- 5. RLS for strains — anyone can view, only peddler/admin can manage

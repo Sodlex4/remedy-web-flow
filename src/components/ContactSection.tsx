@@ -6,11 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Phone, Clock, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBusiness } from '@/context/BusinessContext';
+import { useLocation } from '@/context/LocationContext';
 import { supabase } from '@/lib/supabase';
 import { toast as sonnerToast } from 'sonner';
 
 const ContactSection = () => {
   const { county, whatsappNumber, email: businessEmail, content } = useBusiness();
+  const { selectedPeddler } = useLocation();
   const { toast } = useToast();
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +33,7 @@ const ContactSection = () => {
       email: formData.email,
       subject: formData.subject,
       message: formData.message,
+      peddler_id: selectedPeddler?.id || null,
     }]);
 
     setIsSubmitting(false);
