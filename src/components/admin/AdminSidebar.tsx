@@ -5,7 +5,6 @@ import { Switch } from '@/components/ui/switch';
 import { 
   X, 
   Leaf, 
-  FileText, 
   Settings, 
   LogOut, 
   User,
@@ -59,13 +58,6 @@ const AdminSidebar = ({
       icon: CalendarIcon, 
       active: false,
       path: '/admin/calendar'
-    },
-    { 
-      name: 'Pickup Requests', 
-      icon: FileText, 
-      active: false,
-      badge: newRequestsCount > 0 ? newRequestsCount : undefined,
-      path: '/admin/dashboard'
     },
     { 
       name: 'Messages', 

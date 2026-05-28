@@ -50,6 +50,11 @@ const RequestPickupModal = ({ isOpen, onClose, selectedStrains, onRemoveStrain }
       toast.error('Please fill in all required fields');
       return;
     }
+
+    if (!/^\+?\d{9,15}$/.test(formData.whatsappNumber.replace(/[\s\-]/g, ''))) {
+      toast.error('Please enter a valid phone number (e.g., +254700123456)');
+      return;
+    }
     
     // Create WhatsApp message
     const message = `Hello ${businessName}! I'd like to request a pickup:

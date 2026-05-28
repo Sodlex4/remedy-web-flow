@@ -54,11 +54,18 @@ const PickupRequestForm = () => {
     return strains.find(s => s.name === name)?.price ?? 0;
   };
 
+  const isValidPhone = (phone: string) => /^\+?\d{9,15}$/.test(phone.replace(/[\s\-]/g, ''));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.customerName || !formData.whatsappNumber || !formData.strain) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (!isValidPhone(formData.whatsappNumber)) {
+      toast.error('Please enter a valid phone number (e.g., +254700123456)');
       return;
     }
 

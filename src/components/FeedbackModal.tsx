@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Star, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 const FeedbackModal = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,14 +34,22 @@ const FeedbackModal = () => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call - replace with actual Supabase insert
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error } = await supabase.from('feedback').insert([{
+        rating,
+        message: feedback,
+        email: email || null,
+      }]);
+
+      if (error) {
+        console.error('Failed to save feedback:', error);
+        toast.error('Failed to submit feedback. Please try again.');
+        return;
+      }
       
       toast.success('Thanks for your feedback! 🌿', {
         description: 'Your input helps us improve our service.',
       });
       
-      // Reset form
       setRating(0);
       setFeedback('');
       setEmail('');

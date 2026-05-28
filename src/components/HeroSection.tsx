@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useBusiness } from '@/context/BusinessContext';
+import { useNavigate } from 'react-router-dom';
 
 const HeroSection = () => {
   const { content } = useBusiness();
   const typedRef = useRef<HTMLSpanElement>(null);
+  const navigate = useNavigate();
 
   const tagline = content('tagline');
   const welcome = content('hero_welcome');
@@ -24,11 +26,6 @@ const HeroSection = () => {
     }
   }, [tagline]);
 
-  const scrollToShop = () => {
-    const element = document.querySelector('#shop');
-    if (element) element.scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
     <section id="home" className="min-h-screen flex items-center pt-20 relative overflow-hidden">
       <div className="container mx-auto px-4">
@@ -39,7 +36,7 @@ const HeroSection = () => {
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-lg">{welcome} {description}</p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button onClick={scrollToShop} className="bg-primary hover:bg-secondary text-primary-foreground px-8 py-3 text-lg">Explore Our Strains</Button>
+              <Button onClick={() => navigate('/search')} className="bg-primary hover:bg-secondary text-primary-foreground px-8 py-3 text-lg">Explore Our Strains</Button>
               <Button variant="outline" onClick={() => document.querySelector('#about')?.scrollIntoView({ behavior: 'smooth' })}
                 className="border-primary text-primary hover:bg-primary hover:text-primary-foreground px-8 py-3 text-lg">Learn More</Button>
             </div>

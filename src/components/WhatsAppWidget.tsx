@@ -19,7 +19,7 @@ const WhatsAppWidget = () => {
   const whatsappNumber = selectedPeddler?.whatsappNumber || defaultPhone;
 
   useEffect(() => {
-    setIsSearchPage(window.location.pathname === '/search');
+    setIsSearchPage(window.location.pathname === '/search' || window.location.pathname.startsWith('/admin'));
   }, []);
 
   useEffect(() => {
